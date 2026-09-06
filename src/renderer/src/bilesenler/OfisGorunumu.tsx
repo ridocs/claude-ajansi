@@ -14,10 +14,10 @@ interface Props {
 type AjanDurum = 'hazir' | 'calisiyor' | 'bitti' | 'hata' | 'kapali'
 
 const G = 1320
-const Y = 700
+const Y = 618
 
 /** Mudurun masasi solda; ekipler onun karsisinda yay ciziyor. */
-const MERKEZ = { x: 214, y: 352 }
+const MERKEZ = { x: 208, y: 336 }
 const YARICAP = 830
 const ACI_UC = 66
 const DIKEY_ORAN = 0.44
@@ -246,13 +246,39 @@ function Monitor({
 // ---------------------------------------------------------------- ajan
 
 function Baloncuk({ metin, renk }: { metin: string; renk: string }): React.JSX.Element {
-  const kisa = metin.replace(/\s+/g, ' ').slice(0, 34)
-  const g = Math.max(46, Math.min(kisa.length * 3.6 + 14, 132))
+  const kisa = metin.replace(/\s+/g, ' ').trim().slice(0, 26)
+  // Metin genisligi tahmini; textLength ile tasma kesin engelleniyor.
+  const yazi = Math.max(24, kisa.length * 3.5)
+  const g = Math.min(yazi + 14, 112)
+  const h = 15
+
   return (
-    <g className="baloncuk" transform={`translate(${-g / 2} -46)`}>
-      <rect width={g} height="19" rx="9" fill="#0d1626" stroke={renk} strokeOpacity="0.75" />
-      <path d={`M${g / 2 - 4} 19 l4 6 l4 -6 Z`} fill="#0d1626" stroke={renk} strokeOpacity="0.75" />
-      <text x={g / 2} y="12.8" className="baloncuk-yazi" fill="var(--metin-2)">
+    <g className="baloncuk" transform={`translate(${-g / 2} -38)`}>
+      <rect
+        width={g}
+        height={h}
+        rx="4"
+        fill="rgba(9,15,27,.95)"
+        stroke={renk}
+        strokeOpacity="0.55"
+        strokeWidth="0.7"
+      />
+      {/* kuyruk: ince ve kisa */}
+      <path
+        d={`M${g / 2 - 3} ${h} l3 4 l3 -4 Z`}
+        fill="rgba(9,15,27,.95)"
+        stroke={renk}
+        strokeOpacity="0.55"
+        strokeWidth="0.7"
+      />
+      <text
+        x={g / 2}
+        y={h - 4.6}
+        className="baloncuk-yazi"
+        fill="var(--metin-2)"
+        textLength={g - 10}
+        lengthAdjust="spacingAndGlyphs"
+      >
         {kisa}
       </text>
     </g>
@@ -260,17 +286,33 @@ function Baloncuk({ metin, renk }: { metin: string; renk: string }): React.JSX.E
 }
 
 function YaziyorBaloncuk({ renk }: { renk: string }): React.JSX.Element {
+  const g = 26
+  const h = 13
   return (
-    <g className="baloncuk" transform="translate(-17 -44)">
-      <rect width="34" height="17" rx="8.5" fill="#0d1626" stroke={renk} strokeOpacity="0.7" />
-      <path d="M13 17 l4 5 l4 -5 Z" fill="#0d1626" stroke={renk} strokeOpacity="0.7" />
+    <g className="baloncuk" transform={`translate(${-g / 2} -36)`}>
+      <rect
+        width={g}
+        height={h}
+        rx="4"
+        fill="rgba(9,15,27,.95)"
+        stroke={renk}
+        strokeOpacity="0.5"
+        strokeWidth="0.7"
+      />
+      <path
+        d={`M${g / 2 - 2.5} ${h} l2.5 3.5 l2.5 -3.5 Z`}
+        fill="rgba(9,15,27,.95)"
+        stroke={renk}
+        strokeOpacity="0.5"
+        strokeWidth="0.7"
+      />
       {[0, 1, 2].map((i) => (
         <circle
           key={i}
           className="yaziyor-nokta"
-          cx={11 + i * 6}
-          cy="8.5"
-          r="1.9"
+          cx={7.5 + i * 5.5}
+          cy={h / 2}
+          r="1.5"
           fill={renk}
           style={{ animationDelay: `${i * 0.18}s` }}
         />
@@ -299,9 +341,12 @@ function Ajan({
   return (
     <g className={`ajan ajan-${durum}`} style={{ animationDelay: `${gecikme}s` }}>
       <title>{baslik}</title>
-      <g transform={`scale(${olcek})`}>
-        {soz !== undefined && (soz ? <Baloncuk metin={soz} renk={renk} /> : <YaziyorBaloncuk renk={renk} />)}
 
+      {/* Baloncuk ajanın ölçeğine tabi değil: her masada aynı boyutta kalır. */}
+      {soz !== undefined &&
+        (soz ? <Baloncuk metin={soz} renk={renk} /> : <YaziyorBaloncuk renk={renk} />)}
+
+      <g transform={`scale(${olcek})`}>
         <ellipse cx="0" cy="15" rx="11" ry="3" fill="rgba(0,0,0,.5)" />
 
         {/* klavyede gezinen kollar */}
@@ -488,10 +533,26 @@ function Masa({
         </g>
       ))}
 
-      <g className="masa-etiket">
-        <rect x="4" y="-46" width="146" height="20" rx="6" fill="rgba(7,12,22,.9)" stroke={renk} strokeOpacity="0.5" />
-        <circle cx="15" cy="-36" r="3.2" fill={renk} className={calisan > 0 ? 'nabizli' : ''} />
-        <text x="23" y="-32" className="masa-ad" fill="var(--metin)">
+      {/* Etiket masanın eğimini almaz: karşı rotasyonla düz kalır. */}
+      <g className="masa-etiket" transform={`rotate(${-egim} ${G_MASA / 2} -62)`}>
+        <rect
+          x={G_MASA / 2 - 75}
+          y="-72"
+          width="150"
+          height="21"
+          rx="6"
+          fill="rgba(7,12,22,.92)"
+          stroke={renk}
+          strokeOpacity="0.5"
+        />
+        <circle
+          cx={G_MASA / 2 - 64}
+          cy="-61.5"
+          r="3.2"
+          fill={renk}
+          className={calisan > 0 ? 'nabizli' : ''}
+        />
+        <text x={G_MASA / 2 - 55} y="-57.5" className="masa-ad" fill="var(--metin)">
           {ad}
         </text>
       </g>
@@ -527,8 +588,8 @@ export default function OfisGorunumu({
     // Kenardaki masalar hafifce asagi kayar; satirlar yay gibi bukulur.
     const SUTUN_X = [452, 668, 884, 1100]
     const SATIR = [
-      { y: 258, olcek: 0.78 },
-      { y: 486, olcek: 0.92 }
+      { y: 244, olcek: 0.74 },
+      { y: 438, olcek: 0.88 }
     ]
 
     return departmanlar.slice(0, 8).map((d, i) => {
@@ -544,7 +605,7 @@ export default function OfisGorunumu({
         id: d.id,
         x: SUTUN_X[sutun] - (214 * satir.olcek) / 2,
         // Yay etkisi: kenarlar merkeze gore asagida
-        y: satir.y + merkezdenUzaklik * 16,
+        y: satir.y + merkezdenUzaklik * 13,
         olcek: satir.olcek,
         // Masalar mudure doner
         egim: (sutun - 1.5) * -2.6,
