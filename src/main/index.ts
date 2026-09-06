@@ -6,14 +6,20 @@ import { authDurumu, claudeOturumuVar } from './agency/auth'
 import { ayarlariOku, ayarlariYaz, klasorKullan, type Ayarlar } from './agency/ayarlar'
 import { EGITIM_BRIEFI } from './agency/egitim'
 import { briefCalistir, type CalismaKontrol } from './agency/engine'
+import { calismaKaydet, gecmisListele, gecmisOku, gecmisSil, kayitHazirla } from './agency/gecmis'
 import { hafizaEkle, hafizaListele, hafizaSil, hafizaTemizle } from './agency/hafiza'
 import { buildRoster } from './agency/roster'
-import type { AgencyEvent, Brief, SetupCheck } from '../shared/types'
+import type { AgencyEvent, Brief, RunSummary, SetupCheck } from '../shared/types'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 let pencere: BrowserWindow | null = null
 let calisma: CalismaKontrol | null = null
+
+/** Suren calismanin olaylari; bitince gecmise yazilir. */
+let calismaOlaylari: AgencyEvent[] = []
+let calismaBilgi: { workspace: string; brief: string; egitim: boolean; basladi: number } | null =
+  null
 
 /** Bekleyen onay istekleri: id -> cevabı bekleyen çözücü. */
 const bekleyenOnaylar = new Map<string, (izin: boolean) => void>()
@@ -53,7 +59,29 @@ function pencereOlustur(): void {
 }
 
 function olayGonder(olay: AgencyEvent): void {
+  calismaOlaylari.push(olay)
   pencere?.webContents.send('ajans:olay', olay)
+}
+
+/** Calisma bittiginde akisi ve ozeti kalici gecmise yazar. */
+function gecmiseYaz(ozet: RunSummary): void {
+  if (!calismaBilgi) return
+  try {
+    calismaKaydet(
+      kayitHazirla(
+        calismaBilgi.workspace,
+        calismaBilgi.brief,
+        calismaBilgi.egitim,
+        calismaBilgi.basladi,
+        ozet,
+        calismaOlaylari
+      )
+    )
+  } catch {
+    // Gecmis yazilamazsa calisma yine de tamamlanmis sayilir.
+  }
+  calismaBilgi = null
+  calismaOlaylari = []
 }
 
 /** Riskli bir iş için arayüze sorar ve cevabı bekler. */
@@ -123,10 +151,20 @@ ipcMain.handle('ajans:brief-calistir', async (_olay, brief: Brief) => {
   if (calisma) return { ok: false, detail: 'Ajans şu anda başka bir işin üzerinde çalışıyor.' }
   if (!brief.workspace) return { ok: false, detail: 'Önce çalışma klasörünü seç.' }
 
+  calismaOlaylari = []
+  calismaBilgi = {
+    workspace: brief.workspace,
+    brief: brief.text,
+    egitim: false,
+    basladi: Date.now()
+  }
   calisma = briefCalistir(brief, olayGonder, onayIste, { tamYetki: ayarlariOku().tamYetki })
 
   calisma.sonuc
-    .then((ozet) => pencere?.webContents.send('ajans:bitti', ozet))
+    .then((ozet) => {
+      gecmiseYaz(ozet)
+      pencere?.webContents.send('ajans:bitti', ozet)
+    })
     .catch((hata: unknown) => {
       pencere?.webContents.send('ajans:bitti', {
         ok: false,
@@ -150,6 +188,8 @@ ipcMain.handle('ajans:egit', async (_olay, workspace: string) => {
   if (calisma) return { ok: false, detail: 'Ajans şu anda başka bir işin üzerinde çalışıyor.' }
   if (!workspace) return { ok: false, detail: 'Önce çalışma klasörünü seç.' }
 
+  calismaOlaylari = []
+  calismaBilgi = { workspace, brief: EGITIM_BRIEFI, egitim: true, basladi: Date.now() }
   calisma = briefCalistir({ text: EGITIM_BRIEFI, workspace }, olayGonder, onayIste, {
     egitim: true,
     // Egitim turunda her ajanin raporu kendi hafizasina yazilir.
@@ -157,7 +197,10 @@ ipcMain.handle('ajans:egit', async (_olay, workspace: string) => {
   })
 
   calisma.sonuc
-    .then((ozet) => pencere?.webContents.send('ajans:bitti', ozet))
+    .then((ozet) => {
+      gecmiseYaz(ozet)
+      pencere?.webContents.send('ajans:bitti', ozet)
+    })
     .catch((hata: unknown) => {
       pencere?.webContents.send('ajans:bitti', {
         ok: false,
@@ -174,6 +217,33 @@ ipcMain.handle('ajans:egit', async (_olay, workspace: string) => {
     })
 
   return { ok: true, detail: 'Eğitim turu başladı.' }
+})
+
+ipcMain.handle('ajans:dosya-ac', async (_olay, yol: string) => {
+  // shell.openPath bos string donerse acilis basarili demektir.
+  const hata = await shell.openPath(yol)
+  return hata ? { ok: false, detail: hata } : { ok: true, detail: 'Dosya açıldı.' }
+})
+
+ipcMain.handle('ajans:klasorde-goster', (_olay, yol: string) => {
+  shell.showItemInFolder(yol)
+  return { ok: true, detail: 'Klasörde gösteriliyor.' }
+})
+
+ipcMain.handle('ajans:tam-ekran', () => {
+  if (!pencere) return false
+  const yeni = !pencere.isFullScreen()
+  pencere.setFullScreen(yeni)
+  return yeni
+})
+
+ipcMain.handle('ajans:gecmis', (_olay, workspace?: string) => gecmisListele(workspace))
+ipcMain.handle('ajans:gecmis-oku', (_olay, workspace: string, id: string) =>
+  gecmisOku(workspace, id)
+)
+ipcMain.handle('ajans:gecmis-sil', (_olay, workspace: string, id: string) => {
+  gecmisSil(workspace, id)
+  return gecmisListele(workspace)
 })
 
 ipcMain.handle('ajans:hafiza', () => hafizaListele())

@@ -5,7 +5,12 @@ import type { Ayarlar } from '../../shared/types'
 
 export type { Ayarlar }
 
-const VARSAYILAN: Ayarlar = { sonKlasor: '', klasorGecmisi: [], tamYetki: false }
+const VARSAYILAN: Ayarlar = {
+  sonKlasor: '',
+  klasorGecmisi: [],
+  tamYetki: false,
+  kullaniciAdi: 'Ajans Sahibi'
+}
 
 /** Gecmiste tutulacak en fazla calisma alani. */
 const GECMIS_SINIR = 8
@@ -27,7 +32,15 @@ export function ayarlariOku(): Ayarlar {
     const gecmis = Array.isArray(ham.klasorGecmisi)
       ? ham.klasorGecmisi.filter((k) => typeof k === 'string' && existsSync(k)).slice(0, GECMIS_SINIR)
       : []
-    return { sonKlasor: klasor, klasorGecmisi: gecmis, tamYetki: ham.tamYetki === true }
+    return {
+      sonKlasor: klasor,
+      klasorGecmisi: gecmis,
+      tamYetki: ham.tamYetki === true,
+      kullaniciAdi:
+        typeof ham.kullaniciAdi === 'string' && ham.kullaniciAdi.trim()
+          ? ham.kullaniciAdi.trim().slice(0, 40)
+          : VARSAYILAN.kullaniciAdi
+    }
   } catch {
     // Bozuk ayar dosyasi uygulamayi acilmaz hale getirmemeli.
     return { ...VARSAYILAN }

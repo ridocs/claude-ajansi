@@ -1,4 +1,12 @@
-import { CheckCircle2, FolderOpen, RefreshCw, XCircle } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import {
+  CheckCircle2,
+  FolderOpen,
+  RefreshCw,
+  ShieldAlert,
+  ShieldCheck,
+  XCircle
+} from 'lucide-react'
 import type { AuthStatus, SetupCheck } from '../../../shared/types'
 import { kisaKlasor } from '../ajansDurumu'
 
@@ -6,6 +14,10 @@ interface Props {
   durum: AuthStatus | null
   kontroller: SetupCheck[]
   klasor: string
+  tamYetki: boolean
+  kullaniciAdi: string
+  onTamYetki: (deger: boolean) => void
+  onKullaniciAdi: (ad: string) => void
   onKlasorSec: () => void
   onYenile: () => Promise<unknown>
 }
@@ -14,10 +26,25 @@ export default function Ayarlar({
   durum,
   kontroller,
   klasor,
+  tamYetki,
+  kullaniciAdi,
+  onTamYetki,
+  onKullaniciAdi,
   onKlasorSec,
   onYenile
 }: Props): React.JSX.Element {
+  const [ad, setAd] = useState(kullaniciAdi)
   const hazir = durum?.ready === true
+
+  useEffect(() => {
+    setAd(kullaniciAdi)
+  }, [kullaniciAdi])
+
+  const adKaydet = (): void => {
+    const temiz = ad.trim().slice(0, 40)
+    if (temiz && temiz !== kullaniciAdi) onKullaniciAdi(temiz)
+    else setAd(kullaniciAdi)
+  }
 
   return (
     <div className="ayarlar">
@@ -45,6 +72,41 @@ export default function Ayarlar({
         </div>
       </section>
 
+      <section className={tamYetki ? 'kutu yetki-acik' : 'kutu'}>
+        <div className="kutu-baslik">
+          <h3>Yetki</h3>
+          <span className={tamYetki ? 'rozet kotu' : 'rozet iyi'}>
+            <span className="nokta" />
+            {tamYetki ? 'tam yetki' : 'onay isteniyor'}
+          </span>
+        </div>
+        <div className="kutu-govde yetki-govde">
+          <span
+            className="yetki-ikon"
+            style={{ color: tamYetki ? 'var(--amber)' : 'var(--yesil)' }}
+          >
+            {tamYetki ? <ShieldAlert size={19} /> : <ShieldCheck size={19} />}
+          </span>
+          <p className="ipucu">
+            {tamYetki
+              ? 'Ajanlar tehlikeli komutları ve çalışma alanı dışına yazmayı sana sormadan yapar. Hızlıdır ama kontrol sende değildir.'
+              : 'Tehlikeli komutlar (rm -rf, git reset --hard gibi) ve çalışma alanı dışına yazma girişimleri sana sorulur.'}
+          </p>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={tamYetki}
+            className={tamYetki ? 'anahtar acik' : 'anahtar'}
+            onClick={() => onTamYetki(!tamYetki)}
+          >
+            <span className="anahtar-yuva">
+              <span className="anahtar-top" />
+            </span>
+            {tamYetki ? 'Tam yetki açık' : 'Tam yetki kapalı'}
+          </button>
+        </div>
+      </section>
+
       <section className="kutu">
         <div className="kutu-baslik">
           <h3>Claude Bağlantısı</h3>
@@ -61,7 +123,7 @@ export default function Ayarlar({
           {!hazir && (
             <p className="ipucu uyari">
               Oturum bulunamadı. Terminalde <code>claude</code> komutunu çalıştırıp giriş yap, sonra
-              yukarıdan Yenile'ye bas.
+              yukarıdan Yenile&apos;ye bas.
             </p>
           )}
         </div>
@@ -73,8 +135,8 @@ export default function Ayarlar({
         </div>
         <div className="kutu-govde">
           <p className="ipucu">
-            Ajansın dosyalarına dokunacağı klasör. Uzmanlar bu klasörün dışına yazmak isterse ya da
-            tehlikeli bir komut çalıştıracaksa sana sorulur.
+            Ajansın dosyalarına dokunacağı klasör. Tam yetki kapalıyken bu klasörün dışına yazma
+            girişimi sana sorulur.
           </p>
           <div className="yol-satir">
             <FolderOpen size={14} />
@@ -83,6 +145,30 @@ export default function Ayarlar({
             </span>
             <button type="button" className="dugme" onClick={onKlasorSec}>
               Klasör seç
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="kutu">
+        <div className="kutu-baslik">
+          <h3>Görünen Ad</h3>
+        </div>
+        <div className="kutu-govde">
+          <p className="ipucu">Üst çubukta ve karşılama satırında görünen isim.</p>
+          <div className="yol-satir">
+            <input
+              className="giris"
+              value={ad}
+              maxLength={40}
+              onChange={(e) => setAd(e.target.value)}
+              onBlur={adKaydet}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+              }}
+            />
+            <button type="button" className="dugme" onClick={adKaydet}>
+              Kaydet
             </button>
           </div>
         </div>

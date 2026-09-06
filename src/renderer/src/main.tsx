@@ -5,6 +5,7 @@ import './styles.css'
 import './sayfalar.css'
 import './ofis.css'
 import './sayfalar2.css'
+import './ek.css'
 
 const kok = document.getElementById('kok')
 if (!kok) throw new Error('Kök eleman bulunamadi')

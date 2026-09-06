@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type {
   AgencyEvent,
+  AgentSpec,
   AuthStatus,
   Department,
   OnayIstegi,
@@ -8,6 +9,7 @@ import type {
   SetupCheck
 } from '../../shared/types'
 import { ajansDurumuHesapla } from './ajansDurumu'
+import AramaPaleti from './bilesenler/AramaPaleti'
 import OnayKutusu from './components/OnayKutusu'
 import AltCubuk from './kabuk/AltCubuk'
 import UstCubuk from './kabuk/UstCubuk'
@@ -17,6 +19,7 @@ import AnaSayfa from './sayfalar/AnaSayfa'
 import Ayarlar from './sayfalar/Ayarlar'
 import Dosyalar from './sayfalar/Dosyalar'
 import Ekip from './sayfalar/Ekip'
+import Gecmis from './sayfalar/Gecmis'
 import Gorevler from './sayfalar/Gorevler'
 import KomutMerkezi from './sayfalar/KomutMerkezi'
 import Ofis from './sayfalar/Ofis'
@@ -36,6 +39,9 @@ export default function App(): React.JSX.Element {
 
   const [klasor, setKlasor] = useState<string>('')
   const [tamYetki, setTamYetki] = useState(false)
+  const [kullaniciAdi, setKullaniciAdi] = useState('Ajans Sahibi')
+  const [aramaAcik, setAramaAcik] = useState(false)
+  const [kadro, setKadro] = useState<AgentSpec[]>([])
   const [olaylar, setOlaylar] = useState<AgencyEvent[]>([])
   const [hal, setHal] = useState<OturumHali>('bosta')
   const [ozet, setOzet] = useState<RunSummary | null>(null)
@@ -56,6 +62,7 @@ export default function App(): React.JSX.Element {
     setDurum(d)
     setKontroller(k)
     setDepartmanlar(kadro.departments)
+    setKadro(kadro.agents)
     setAjanSayisi(kadro.agents.length + 1)
     return d
   }, [])
@@ -66,6 +73,7 @@ export default function App(): React.JSX.Element {
       const ayarlar = await window.ajans.ayarlar()
       if (ayarlar.sonKlasor) setKlasor(ayarlar.sonKlasor)
       setTamYetki(ayarlar.tamYetki)
+      setKullaniciAdi(ayarlar.kullaniciAdi)
     })()
   }, [yenile])
 
@@ -94,6 +102,18 @@ export default function App(): React.JSX.Element {
         return istek
       })
     })
+  }, [])
+
+  // Ctrl+K arama paletini acar.
+  useEffect(() => {
+    const tus = (e: KeyboardEvent): void => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setAramaAcik(true)
+      }
+    }
+    window.addEventListener('keydown', tus)
+    return () => window.removeEventListener('keydown', tus)
   }, [])
 
   const onayCevapla = useCallback((izin: boolean) => {
@@ -235,6 +255,8 @@ export default function App(): React.JSX.Element {
         )
       case 'toplantilar':
         return <Toplantilar olaylar={olaylar} onKomut={() => setSayfa('komut')} />
+      case 'gecmis':
+        return <Gecmis klasor={klasor} calisiyor={hal !== 'bosta'} />
       case 'ekip':
         return (
           <Ekip
@@ -252,6 +274,13 @@ export default function App(): React.JSX.Element {
             durum={durum}
             kontroller={kontroller}
             klasor={klasor}
+            tamYetki={tamYetki}
+            kullaniciAdi={kullaniciAdi}
+            onTamYetki={tamYetkiDegis}
+            onKullaniciAdi={(ad: string) => {
+              setKullaniciAdi(ad)
+              void window.ajans.ayarYaz({ kullaniciAdi: ad })
+            }}
             onKlasorSec={klasorSec}
             onYenile={yenile}
           />
@@ -276,7 +305,9 @@ export default function App(): React.JSX.Element {
         <UstCubuk
           hazir={hazir}
           calisiyor={hal === 'calisiyor'}
+          kullaniciAdi={kullaniciAdi}
           onAyarlar={() => setSayfa('ayarlar')}
+          onArama={() => setAramaAcik(true)}
         />
         <main className="icerik">{sayfaIcerigi()}</main>
       </div>
@@ -291,6 +322,15 @@ export default function App(): React.JSX.Element {
         hazir={hazir}
         onYeniGorev={() => setSayfa('komut')}
         onAyarlar={() => setSayfa('ayarlar')}
+      />
+
+      <AramaPaleti
+        acik={aramaAcik}
+        kadro={kadro}
+        teslimatlar={ajans.teslimatlar}
+        onKapat={() => setAramaAcik(false)}
+        onSayfa={setSayfa}
+        onDosya={(y) => void window.ajans.dosyaAc(y)}
       />
 
       {onay && <OnayKutusu istek={onay} onCevap={onayCevapla} />}

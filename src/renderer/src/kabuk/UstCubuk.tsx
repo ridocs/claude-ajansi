@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react'
 interface Props {
   hazir: boolean
   calisiyor: boolean
+  kullaniciAdi: string
   onAyarlar: () => void
+  onArama: () => void
 }
 
 /** Saat her dakika basi yenilenir; saniye gostermiyoruz. */
@@ -17,16 +19,22 @@ function useSaat(): Date {
   return an
 }
 
-export default function UstCubuk({ hazir, calisiyor, onAyarlar }: Props): React.JSX.Element {
+export default function UstCubuk({
+  hazir,
+  calisiyor,
+  kullaniciAdi,
+  onAyarlar,
+  onArama
+}: Props): React.JSX.Element {
   const an = useSaat()
 
   return (
     <header className="ust">
-      <div className="arama">
+      <button type="button" className="arama arama-dugme" onClick={onArama}>
         <Search size={15} />
-        <input type="search" placeholder="Ekipte, görevde veya çalışanda ara..." spellCheck={false} />
+        <span className="arama-yazi">Ekipte, görevde veya çalışanda ara...</span>
         <span className="arama-kisayol">Ctrl + K</span>
-      </div>
+      </button>
 
       <div className="ust-sag">
         <span className={hazir ? 'rozet iyi' : 'rozet kotu'}>
@@ -51,7 +59,7 @@ export default function UstCubuk({ hazir, calisiyor, onAyarlar }: Props): React.
             <User size={16} />
           </span>
           <span className="kullanici-ad">
-            <b>Ajans Sahibi</b>
+            <b>{kullaniciAdi}</b>
             <span>Yönetici</span>
           </span>
         </div>

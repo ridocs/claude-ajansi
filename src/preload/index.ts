@@ -5,6 +5,8 @@ import type {
   AuthStatus,
   Ayarlar,
   Brief,
+  CalismaKaydi,
+  CalismaOzeti,
   Department,
   HafizaKaydi,
   OnayIstegi,
@@ -34,6 +36,19 @@ const ajans = {
     ipcRenderer.invoke('ajans:brief-calistir', brief),
   egit: (workspace: string): Promise<{ ok: boolean; detail: string }> =>
     ipcRenderer.invoke('ajans:egit', workspace),
+
+  dosyaAc: (yol: string): Promise<{ ok: boolean; detail: string }> =>
+    ipcRenderer.invoke('ajans:dosya-ac', yol),
+  klasordeGoster: (yol: string): Promise<{ ok: boolean; detail: string }> =>
+    ipcRenderer.invoke('ajans:klasorde-goster', yol),
+  tamEkran: (): Promise<boolean> => ipcRenderer.invoke('ajans:tam-ekran'),
+
+  gecmis: (workspace?: string): Promise<CalismaOzeti[]> =>
+    ipcRenderer.invoke('ajans:gecmis', workspace),
+  gecmisOku: (workspace: string, id: string): Promise<CalismaKaydi | null> =>
+    ipcRenderer.invoke('ajans:gecmis-oku', workspace, id),
+  gecmisSil: (workspace: string, id: string): Promise<CalismaOzeti[]> =>
+    ipcRenderer.invoke('ajans:gecmis-sil', workspace, id),
 
   hafiza: (): Promise<HafizaKaydi[]> => ipcRenderer.invoke('ajans:hafiza'),
   hafizaSil: (ajanKey: string): Promise<HafizaKaydi[]> =>

@@ -164,6 +164,8 @@ export interface Ayarlar {
    * Kapaliyken calisma alani disina yazma ve tehlikeli komutlar sana sorulur.
    */
   tamYetki: boolean
+  /** Ust cubukta ve karsilamada gorunen ad. */
+  kullaniciAdi: string
 }
 
 /** Bir ajanin birikmis bilgisi. */
@@ -172,4 +174,33 @@ export interface HafizaKaydi {
   metin: string
   boyut: number
   guncellendi: number
+}
+
+/** Diske yazilan tam calisma kaydi. */
+export interface CalismaKaydi {
+  id: string
+  workspace: string
+  brief: string
+  egitim: boolean
+  basladi: number
+  bitti: number
+  ozet: RunSummary
+  olaylar: AgencyEvent[]
+  dosyalar: string[]
+  ajanSayisi: number
+}
+
+/** Listelerde gosterilen hafif ozet. */
+export interface CalismaOzeti {
+  id: string
+  workspace: string
+  brief: string
+  basladi: number
+  bitti: number
+  egitim: boolean
+  ok: boolean
+  costUsd: number
+  olaySayisi: number
+  dosyaSayisi: number
+  ajanSayisi: number
 }

@@ -1,4 +1,4 @@
-import { FileCode2, FilePlus2 } from 'lucide-react'
+import { ExternalLink, FileCode2, FilePlus2, FolderSearch } from 'lucide-react'
 import type { Teslimat } from '../../../shared/types'
 import { ajanAdi } from '../ajansDurumu'
 
@@ -49,6 +49,24 @@ export default function Dosyalar({ teslimatlar, klasor }: Props): React.JSX.Elem
                   <span title={t.yol}>{kisaYol(t.yol, klasor)}</span>
                 </span>
                 <span className="dosya-ajan">{ajanAdi(t.ajan)}</span>
+                <span className="dosya-eylem">
+                  <button
+                    type="button"
+                    className="ikon-dugme"
+                    title="Dosyayı aç"
+                    onClick={() => void window.ajans.dosyaAc(t.yol)}
+                  >
+                    <ExternalLink size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    className="ikon-dugme"
+                    title="Klasörde göster"
+                    onClick={() => void window.ajans.klasordeGoster(t.yol)}
+                  >
+                    <FolderSearch size={13} />
+                  </button>
+                </span>
               </li>
             ))}
           </ul>

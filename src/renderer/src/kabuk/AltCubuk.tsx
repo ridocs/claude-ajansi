@@ -53,7 +53,12 @@ export default function AltCubuk({
         <button type="button" className="ikon-dugme" onClick={onAyarlar} title="Ayarlar">
           <Settings size={15} />
         </button>
-        <button type="button" className="ikon-dugme" title="Tam ekran">
+        <button
+          type="button"
+          className="ikon-dugme"
+          title="Tam ekran"
+          onClick={() => void window.ajans.tamEkran()}
+        >
           <Maximize2 size={15} />
         </button>
         <button type="button" className="dugme dugme-birincil" onClick={onYeniGorev}>
