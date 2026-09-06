@@ -1,0 +1,38 @@
+{
+  "name": "ajan-ajansi",
+  "version": "0.1.0",
+  "description": "Claude ile calisan masaustu ajans: bir mudur, sekiz takim lideri ve yirmi dort uzman",
+  "main": "./out/main/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "start": "electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "test:baglanti": "node betikler/baglanti-testi.mjs",
+    "test:hiyerarsi": "tsx betikler/hiyerarsi-testi.ts",
+    "test:izin": "tsx betikler/izin-testi.ts",
+    "test:durum": "tsx betikler/durum-testi.ts",
+    "test": "npm run test:izin && npm run test:durum && npm run test:teslimat",
+    "test:teslimat": "tsx betikler/teslimat-testi.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.219",
+    "@fontsource/inter": "^5.3.0",
+    "lucide-react": "^1.41.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "electron": "^38.0.0",
+    "electron-vite": "^4.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tsx": "^4.23.13",
+    "typescript": "^5.7.0",
+    "vite": "^7.0.0"
+  },
+  "license": "MIT"
+}

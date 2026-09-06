@@ -1,0 +1,465 @@
+/* Canlı ofis: müdür solda, ekipler karşısında yarım daire.
+   Bütün animasyonlar sonsuz döngüdür ve birbirinden bağımsız çalışır. */
+
+.ofis-sahne {
+  border: 1px solid var(--cizgi);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: #070c16;
+  line-height: 0;
+}
+
+.ofis-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ================================================== metinler */
+
+.masa-ad {
+  font-family: var(--f);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.merkez-ad {
+  font-family: var(--f);
+  font-size: 16px;
+  font-weight: 700;
+  text-anchor: middle;
+  letter-spacing: -0.01em;
+}
+
+.merkez-alt {
+  font-family: var(--f);
+  font-size: 9.5px;
+  text-anchor: middle;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.merkez-mudur {
+  font-family: var(--f);
+  font-size: 14px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.merkez-alt2 {
+  font-family: var(--f);
+  font-size: 10.5px;
+  text-anchor: middle;
+}
+
+.baloncuk-yazi {
+  font-family: var(--f);
+  font-size: 8.5px;
+  text-anchor: middle;
+}
+
+/* ================================================== masa */
+
+.masa-grup.tiklanir {
+  cursor: pointer;
+}
+
+.masa-grup.tiklanir:hover .masa-isik {
+  opacity: 0.28;
+}
+
+.masa-grup:focus-visible {
+  outline: none;
+}
+
+.masa-grup:focus-visible .masa-etiket rect {
+  stroke-opacity: 1;
+  stroke-width: 2;
+}
+
+.masa-isik {
+  transition: opacity 0.4s ease;
+}
+
+.nabizli {
+  animation: nokta-nabiz 1.7s ease-in-out infinite;
+}
+
+@keyframes nokta-nabiz {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* ================================================== ajan */
+
+.ajan {
+  animation: ajan-suzul 4.4s ease-in-out infinite;
+}
+
+@keyframes ajan-suzul {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2.5px);
+  }
+}
+
+.ajan-calisiyor {
+  animation-duration: 1.9s;
+}
+
+.ajan-hata {
+  animation: ajan-titre 0.9s ease-in-out infinite;
+}
+
+@keyframes ajan-titre {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-1.1px);
+  }
+  75% {
+    transform: translateX(1.1px);
+  }
+}
+
+.ajan-kapali {
+  opacity: 0.3;
+  animation: none;
+}
+
+.ajan-bitti {
+  animation-duration: 5.8s;
+}
+
+/* --- klavyede yazan kollar: her kol kendi ritminde --- */
+
+.kol {
+  transform-origin: 0 5px;
+}
+
+.ajan-calisiyor .kol {
+  animation: kol-bas 0.44s ease-in-out infinite;
+}
+
+@keyframes kol-bas {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(1.4px);
+  }
+}
+
+/* boştaki ajan da arada bir kıpırdar */
+.ajan-hazir .kol-sol,
+.ajan-bitti .kol-sag {
+  animation: kol-kipirda 6s ease-in-out infinite;
+}
+
+@keyframes kol-kipirda {
+  0%,
+  88%,
+  100% {
+    transform: translateY(0);
+  }
+  92% {
+    transform: translateY(0.9px);
+  }
+}
+
+.isik {
+  animation: isik-nabiz 1.3s ease-in-out infinite;
+}
+
+@keyframes isik-nabiz {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(0.7);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.goz {
+  animation: goz-kirp 6s infinite;
+  transform-origin: center;
+}
+
+@keyframes goz-kirp {
+  0%,
+  94%,
+  100% {
+    transform: scaleY(1);
+  }
+  96% {
+    transform: scaleY(0.1);
+  }
+}
+
+/* ================================================== konuşma baloncuğu */
+
+.baloncuk {
+  animation: baloncuk-gir 0.45s ease-out both;
+}
+
+@keyframes baloncuk-gir {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.yaziyor-nokta {
+  animation: yaziyor 1.15s ease-in-out infinite;
+}
+
+@keyframes yaziyor {
+  0%,
+  70%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  35% {
+    opacity: 1;
+    transform: translateY(-1.6px);
+  }
+}
+
+/* ================================================== klavye */
+
+.tus {
+  opacity: 0.25;
+}
+
+.klavye.canli .tus {
+  animation: tus-bas 0.9s ease-in-out infinite;
+}
+
+@keyframes tus-bas {
+  0%,
+  100% {
+    opacity: 0.22;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+/* ================================================== monitörler */
+
+.ekran-yuzey {
+  opacity: 0.12;
+}
+
+.ekran-yuzey.canli {
+  animation: ekran-parla 2.6s ease-in-out infinite;
+}
+
+@keyframes ekran-parla {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.32;
+  }
+}
+
+.ekran-glow {
+  opacity: 0.11;
+  filter: blur(3.5px);
+}
+
+/* --- kod satırları akar (backend, sistem) --- */
+
+.ic-kod {
+  opacity: 0.45;
+}
+
+.ic-kod.canli {
+  opacity: 1;
+  animation: kod-ak 4s linear infinite;
+}
+
+@keyframes kod-ak {
+  0% {
+    transform: translateY(2px);
+  }
+  100% {
+    transform: translateY(-42px);
+  }
+}
+
+/* --- çubuk grafik (seo, veri) --- */
+
+.ic-grafik .cubuk {
+  transform-origin: center bottom;
+  transform-box: fill-box;
+  opacity: 0.45;
+}
+
+.ic-grafik.canli .cubuk {
+  opacity: 1;
+  animation: cubuk-oynat 1.6s ease-in-out infinite;
+}
+
+@keyframes cubuk-oynat {
+  0%,
+  100% {
+    transform: scaleY(0.28);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* --- arayüz blokları (frontend, tasarım) --- */
+
+.ic-arayuz .blok {
+  opacity: 0.4;
+}
+
+.ic-arayuz.canli .blok {
+  animation: blok-parla 2.6s ease-in-out infinite;
+}
+
+@keyframes blok-parla {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+/* --- test tikleri (kalite) --- */
+
+.ic-test .satir {
+  opacity: 0.35;
+}
+
+.ic-test.canli .satir {
+  animation: test-gec 2.4s ease-in-out infinite;
+}
+
+@keyframes test-gec {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  45% {
+    opacity: 1;
+  }
+}
+
+/* --- güvenlik taraması --- */
+
+.ic-tarama .tarama-cizgi {
+  opacity: 0.4;
+}
+
+.ic-tarama.canli .tarama-cizgi {
+  opacity: 0.85;
+  animation: tarama 2.2s ease-in-out infinite;
+}
+
+@keyframes tarama {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(14px);
+  }
+}
+
+/* --- dalga (müdür) --- */
+
+.ic-dalga .dalga {
+  opacity: 0.45;
+  stroke-dasharray: 5 4;
+}
+
+.ic-dalga.canli .dalga {
+  opacity: 1;
+  animation: dalga-kay 1.2s linear infinite;
+}
+
+@keyframes dalga-kay {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -18;
+  }
+}
+
+/* ================================================== şehir */
+
+.pencere {
+  animation: pencere-yan 8s ease-in-out infinite;
+  opacity: 0.5;
+}
+
+@keyframes pencere-yan {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
+
+/* ================================================== hareket azaltma */
+
+@media (prefers-reduced-motion: reduce) {
+  .ajan,
+  .kol,
+  .isik,
+  .goz,
+  .baloncuk,
+  .yaziyor-nokta,
+  .klavye.canli .tus,
+  .ekran-yuzey.canli,
+  .ic-kod.canli,
+  .ic-grafik.canli .cubuk,
+  .ic-arayuz.canli .blok,
+  .ic-test.canli .satir,
+  .ic-tarama.canli .tarama-cizgi,
+  .ic-dalga.canli .dalga,
+  .pencere,
+  .nabizli {
+    animation: none;
+  }
+
+  .ekran-yuzey.canli {
+    opacity: 0.3;
+  }
+
+  .ic-kod.canli,
+  .ic-grafik.canli .cubuk,
+  .ic-arayuz.canli .blok,
+  .ic-test.canli .satir {
+    opacity: 0.9;
+  }
+}
