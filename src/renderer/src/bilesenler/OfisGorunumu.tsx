@@ -334,9 +334,21 @@ function Ajan({
 
 // ---------------------------------------------------------------- masa
 
-function Klavye({ x, canli, renk, gecikme }: { x: number; canli: boolean; renk: string; gecikme: number }): React.JSX.Element {
+function Klavye({
+  x,
+  y = 0,
+  canli,
+  renk,
+  gecikme
+}: {
+  x: number
+  y?: number
+  canli: boolean
+  renk: string
+  gecikme: number
+}): React.JSX.Element {
   return (
-    <g transform={`translate(${x} 0)`} className={canli ? 'klavye canli' : 'klavye'}>
+    <g transform={`translate(${x} ${y})`} className={canli ? 'klavye canli' : 'klavye'}>
       <rect x="-12" y="0" width="24" height="7" rx="1.6" fill="#162034" stroke="#26334f" />
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <rect
@@ -385,8 +397,19 @@ function Masa({
   calisan: number
   onTikla?: () => void
 }): React.JSX.Element {
-  const genislik = 196
-  const aralik = 46
+  const G_MASA = 214
+  // Masa yuzeyi yarim daire: ust kenar yukari bombeli bir yay.
+  const KAVIS = -34
+  const UST = 30
+  const KALINLIK = 26
+
+  // Bezier uzerindeki nokta: x dogrusal, y kavise gore.
+  const kavisY = (t: number): number => (1 - t) ** 2 * UST + 2 * (1 - t) * t * KAVIS + t ** 2 * UST
+
+  const yerler = uyeler.map((u, i) => {
+    const t = (i + 0.5) / uyeler.length
+    return { u, t, x: G_MASA * t, y: kavisY(t) }
+  })
 
   return (
     <g
@@ -402,22 +425,24 @@ function Masa({
         }
       }}
     >
+      {/* zemin ışığı */}
       <ellipse
         className="masa-isik"
-        cx={genislik / 2}
-        cy="92"
-        rx={genislik / 1.75}
-        ry="27"
+        cx={G_MASA / 2}
+        cy="96"
+        rx={G_MASA / 1.7}
+        ry="30"
         fill={renk}
         opacity={calisan > 0 ? 0.17 : 0.055}
       />
 
-      {uyeler.map((u, i) => (
+      {/* monitörler: kavisin dışında, her ajanın önünde */}
+      {yerler.map(({ u, x: mx, y: my }, i) => (
         <Monitor
           key={`m-${u.key}`}
           kimlik={`ek-${id}-${i}`}
-          x={9 + i * aralik}
-          y={2}
+          x={mx - 14}
+          y={my - 34}
           dept={id}
           renk={renk}
           canli={u.durum === 'calisiyor'}
@@ -425,42 +450,48 @@ function Masa({
         />
       ))}
 
-      {/* masa yüzeyi */}
+      {/* kavisli masa yüzeyi */}
       <path
-        d={`M5 36 L${genislik - 5} 36 L${genislik} 60 L0 60 Z`}
+        d={`M0 ${UST} Q ${G_MASA / 2} ${KAVIS} ${G_MASA} ${UST} L ${G_MASA} ${UST + KALINLIK} Q ${G_MASA / 2} ${KAVIS + KALINLIK} 0 ${UST + KALINLIK} Z`}
         fill="#1a2540"
         stroke="#2b3c5e"
       />
-      <path d={`M0 60 L${genislik} 60 L${genislik} 64 L0 64 Z`} fill="#121b2e" />
+      {/* masanın ön kenarı */}
+      <path
+        d={`M0 ${UST + KALINLIK} Q ${G_MASA / 2} ${KAVIS + KALINLIK} ${G_MASA} ${UST + KALINLIK} L ${G_MASA} ${UST + KALINLIK + 5} Q ${G_MASA / 2} ${KAVIS + KALINLIK + 5} 0 ${UST + KALINLIK + 5} Z`}
+        fill="#121b2e"
+      />
 
-      {/* klavyeler */}
-      {uyeler.map((u, i) => (
+      {/* klavyeler: masa yüzeyinde, kavisi izler */}
+      {yerler.map(({ u, x: kx, y: ky }, i) => (
         <Klavye
           key={`k-${u.key}`}
-          x={23 + i * aralik}
+          x={kx}
+          y={ky + 12}
           canli={u.durum === 'calisiyor'}
           renk={renk}
           gecikme={i * 0.3}
         />
       ))}
 
-      {/* ajanlar */}
-      {uyeler.map((u, i) => (
-        <g key={u.key} transform={`translate(${23 + i * aralik} 78)`}>
+      {/* ajanlar: masanın önünde, kavis boyunca oturur */}
+      {yerler.map(({ u, x: ax, y: ay, t }, i) => (
+        <g key={u.key} transform={`translate(${ax} ${ay + 60})`}>
           <Ajan
             renk={renk}
             durum={u.durum}
             gecikme={(i % 4) * 0.55}
             baslik={`${ajanAdi(u.key)} — ${u.durum}`}
             soz={u.soz}
+            olcek={0.96 + Math.abs(t - 0.5) * 0.12}
           />
         </g>
       ))}
 
       <g className="masa-etiket">
-        <rect x="2" y="-25" width="142" height="20" rx="6" fill="rgba(7,12,22,.9)" stroke={renk} strokeOpacity="0.5" />
-        <circle cx="13" cy="-15" r="3.2" fill={renk} className={calisan > 0 ? 'nabizli' : ''} />
-        <text x="21" y="-11" className="masa-ad" fill="var(--metin)">
+        <rect x="4" y="-46" width="146" height="20" rx="6" fill="rgba(7,12,22,.9)" stroke={renk} strokeOpacity="0.5" />
+        <circle cx="15" cy="-36" r="3.2" fill={renk} className={calisan > 0 ? 'nabizli' : ''} />
+        <text x="23" y="-32" className="masa-ad" fill="var(--metin)">
           {ad}
         </text>
       </g>
@@ -492,15 +523,18 @@ export default function OfisGorunumu({
   }, [ajans.sonKonusmalar])
 
   const masalar = useMemo(() => {
-    const n = Math.min(departmanlar.length, 8)
+    // Amfi duzeni: mudur solda, ekipler onun karsisinda iki sirada.
+    // Kenardaki masalar hafifce asagi kayar; satirlar yay gibi bukulur.
+    const SUTUN_X = [452, 668, 884, 1100]
+    const SATIR = [
+      { y: 258, olcek: 0.78 },
+      { y: 486, olcek: 0.92 }
+    ]
+
     return departmanlar.slice(0, 8).map((d, i) => {
-      // Yay uzerinde esit araliklarla dizil.
-      const t = n === 1 ? 0.5 : i / (n - 1)
-      const aci = (-ACI_UC + t * ACI_UC * 2) * (Math.PI / 180)
-      const x = MERKEZ.x + Math.cos(aci) * YARICAP
-      const y = MERKEZ.y + Math.sin(aci) * YARICAP * DIKEY_ORAN
-      // Asagidaki masa daha yakin: buyuk gorunur.
-      const yakinlik = (Math.sin(aci) + 1) / 2
+      const sutun = i % 4
+      const satir = SATIR[Math.floor(i / 4)]
+      const merkezdenUzaklik = Math.abs(sutun - 1.5)
       const uyeler: Uye[] = [d.leadKey, ...d.specialistKeys].map((k) => ({
         key: k,
         durum: durumAl(k),
@@ -508,12 +542,12 @@ export default function OfisGorunumu({
       }))
       return {
         id: d.id,
-        // Masa merkezini hizala.
-        x: x - 196 / 2,
-        y,
-        olcek: 0.8 + yakinlik * 0.26,
-        // Yaya bakacak sekilde hafif egim.
-        egim: Math.sin(aci) * 7,
+        x: SUTUN_X[sutun] - (214 * satir.olcek) / 2,
+        // Yay etkisi: kenarlar merkeze gore asagida
+        y: satir.y + merkezdenUzaklik * 16,
+        olcek: satir.olcek,
+        // Masalar mudure doner
+        egim: (sutun - 1.5) * -2.6,
         ad: gorunumAl(d.id).ad,
         renk: gorunumAl(d.id).renk,
         uyeler,
@@ -570,8 +604,8 @@ export default function OfisGorunumu({
 
         {/* yay biçimli zemin çizgileri: masaların dizilimini vurgular */}
         <g fill="none" stroke="rgba(150,185,245,.09)">
-          {[YARICAP - 130, YARICAP - 40, YARICAP + 60].map((r, i) => (
-            <ellipse key={i} cx={MERKEZ.x} cy={MERKEZ.y} rx={r} ry={r * DIKEY_ORAN} />
+          {[300, 520, 740, 960].map((r, i) => (
+            <ellipse key={i} cx={MERKEZ.x} cy={MERKEZ.y + 40} rx={r} ry={r * DIKEY_ORAN} />
           ))}
         </g>
         <g stroke="rgba(150,185,245,.055)">
