@@ -9,6 +9,7 @@ import { denetimBriefi } from './agency/denetim'
 import { briefCalistir, type CalismaKontrol } from './agency/engine'
 import { calismaKaydet, gecmisListele, gecmisOku, gecmisSil, kayitHazirla } from './agency/gecmis'
 import {
+  hafizaDosyalariHazirla,
   hafizaEkle,
   hafizaListele,
   hafizaSil,
@@ -189,6 +190,11 @@ function kurulumKontrolleri(): SetupCheck[] {
   ]
 }
 
+/** Defteri olan herkes: mudur kadro listesinde yer almadigi icin elle eklenir. */
+function defterAnahtarlari(): string[] {
+  return ['mudur', ...buildRoster().agents.map((a) => a.key)]
+}
+
 // ------------------------------------------------------------------ IPC
 
 ipcMain.handle('ajans:durum', () => authDurumu())
@@ -225,6 +231,7 @@ ipcMain.handle('ajans:brief-calistir', async (_olay, brief: Brief) => {
     egitim: false,
     basladi: Date.now()
   }
+  hafizaDosyalariHazirla(defterAnahtarlari())
   calisma = briefCalistir(brief, olayGonder, onayIste, { tamYetki: ayarlariOku().tamYetki })
 
   calisma.sonuc
@@ -257,9 +264,13 @@ ipcMain.handle('ajans:egit', async (_olay, workspace: string) => {
 
   calismaOlaylari = []
   calismaBilgi = { workspace, brief: EGITIM_BRIEFI, egitim: true, basladi: Date.now() }
+  // Defterler onceden acilsin: dosya yoksa ajanin Read/Edit cagrisi hataya
+  // duser ve ajan defterini guncellemekten vazgecer.
+  hafizaDosyalariHazirla(defterAnahtarlari())
   calisma = briefCalistir({ text: EGITIM_BRIEFI, workspace }, olayGonder, onayIste, {
     egitim: true,
-    // Egitim turunda her ajanin raporu kendi hafizasina yazilir.
+    // Ajan defterini kendi yazar; bu yalnizca ust katmana dusen raporlar
+    // icin yedek yol. Ic ice ajanlarin sonucu buraya her zaman ulasmiyor.
     onOgrenme: (ajanKey, rapor) => hafizaEkle(ajanKey, rapor)
   })
 
@@ -297,6 +308,7 @@ ipcMain.handle('ajans:denetle', async (_olay, workspace: string) => {
   const brief = denetimBriefi(workspace)
   calismaOlaylari = []
   calismaBilgi = { workspace, brief, egitim: false, basladi: Date.now() }
+  hafizaDosyalariHazirla(defterAnahtarlari())
   calisma = briefCalistir({ text: brief, workspace }, olayGonder, onayIste, {
     denetim: true,
     tamYetki: ayarlariOku().tamYetki

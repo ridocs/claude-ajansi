@@ -1,7 +1,7 @@
 // Onay kapisi birim testi. API cagrisi yapmaz, para harcamaz.
 // Calistirmak icin: npm run test:izin
 
-import { izinDegerlendir } from '../src/main/agency/izin.ts'
+import { egitimAracKarari, izinDegerlendir } from '../src/main/agency/izin.ts'
 
 const ALAN = process.platform === 'win32' ? 'C:\\proje\\ajans' : '/proje/ajans'
 const DISARI = process.platform === 'win32' ? 'C:\\Windows\\System32' : '/etc'
@@ -117,6 +117,59 @@ const AYIRAC = process.platform === 'win32' ? '\\' : '/'
   if (karar.tur !== 'onay-gerekli') kaldiEk++
 }
 
+// --- egitim turu: yalnizca hafiza defteri yazilabilir
+const egitimSenaryolari: { ad: string; tool: string; input: Record<string, unknown>; bekleniyor: string }[] = [
+  {
+    ad: 'Egitim: kendi defterine yazma serbest',
+    tool: 'Edit',
+    input: { file_path: `${HAFIZA_KLASORU}${AYIRAC}uzman-seo-1.md` },
+    bekleniyor: 'izin'
+  },
+  {
+    ad: 'Egitim: defteri Write ile olusturma serbest',
+    tool: 'Write',
+    input: { file_path: `${HAFIZA_KLASORU}${AYIRAC}lider-veri.md` },
+    bekleniyor: 'izin'
+  },
+  {
+    ad: 'Egitim: proje dosyasina yazma reddedilir',
+    tool: 'Write',
+    input: { file_path: `${ALAN}${AYIRAC}src${AYIRAC}app.ts` },
+    bekleniyor: 'red'
+  },
+  {
+    ad: 'Egitim: yolsuz yazma reddedilir',
+    tool: 'Write',
+    input: {},
+    bekleniyor: 'red'
+  },
+  {
+    ad: 'Egitim: komut calistirma reddedilir',
+    tool: 'Bash',
+    input: { command: 'npm test' },
+    bekleniyor: 'red'
+  },
+  {
+    ad: 'Egitim: okuma kapinin konusu degil',
+    tool: 'Read',
+    input: { file_path: `${ALAN}${AYIRAC}README.md` },
+    bekleniyor: 'ilgisiz'
+  },
+  {
+    ad: 'Egitim: arama kapinin konusu degil',
+    tool: 'WebSearch',
+    input: { query: 'react 19' },
+    bekleniyor: 'ilgisiz'
+  }
+]
+
+for (const e of egitimSenaryolari) {
+  const karar = egitimAracKarari(HAFIZA_KLASORU, e.tool, e.input)
+  const ok = karar === e.bekleniyor
+  console.log(`  ${ok ? 'gecti ' : 'KALDI '} ${e.ad}${ok ? '' : ` -> beklenen "${e.bekleniyor}", gelen "${karar}"`}`)
+  if (!ok) kaldiEk++
+}
+
 let gecti = 0
 let kaldi = kaldiEk
 
@@ -132,5 +185,5 @@ for (const s of senaryolar) {
   }
 }
 
-console.log(`\n${gecti} gecti, ${kaldi} kaldi (toplam ${senaryolar.length + 2})`)
+console.log(`\n${gecti} gecti, ${kaldi} kaldi (toplam ${senaryolar.length + 9})`)
 process.exit(kaldi === 0 ? 0 : 1)

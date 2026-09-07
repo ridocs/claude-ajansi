@@ -47,6 +47,24 @@ function dosyaAdi(ajanKey: string): string {
   return `${ajanKey.replace(/[^a-z0-9-]/gi, '_')}.md`
 }
 
+/**
+ * Her ajan icin bos bir defter dosyasi hazirlar.
+ *
+ * Dosya yoksa ajanin Read/Edit cagrisi hataya duser ve ajan defterini
+ * guncellemekten vazgecer. Turdan once bos iskeleti yazip bu tuzagi
+ * kapatiyoruz; var olan dosyaya dokunulmaz.
+ */
+export function hafizaDosyalariHazirla(ajanAnahtarlari: string[]): void {
+  for (const key of ajanAnahtarlari) {
+    const yol = hafizaDosyaYolu(key)
+    if (existsSync(yol)) continue
+    writeFileSync(yol, `# ${key} defteri
+
+Henüz kayıt yok.
+`, 'utf-8')
+  }
+}
+
 export function hafizaOku(ajanKey: string): string {
   try {
     const yol = join(dizin(), dosyaAdi(ajanKey))

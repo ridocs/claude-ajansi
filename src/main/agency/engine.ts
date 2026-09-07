@@ -10,7 +10,7 @@ import { DENETIM_TALIMATI, denetimPrompt } from './denetim'
 import { hafizaBolumu, hafizaDizini, hafizaDosyaYolu } from './hafiza'
 import { ekipBilgisi } from './hafizaPaylasim'
 import { ogrenmeyeDeger } from './ogrenme'
-import { YAZAN_ARACLAR, izinDegerlendir } from './izin'
+import { YAZAN_ARACLAR, egitimAracKarari, izinDegerlendir } from './izin'
 import { buildRoster, mudurPrompt } from './roster'
 import { anlikAl, farkAl } from './teslimat'
 import type {
@@ -45,9 +45,12 @@ function hafizaDosyaNotu(ajanKey: string): string {
     '',
     '--- HAFIZA DEFTERİN ---',
     `Kalıcı hafızan şu dosyada: ${hafizaDosyaYolu(ajanKey)}`,
-    'Bu dosyayı Read ile açıp geçmişte ne öğrendiğine bakabilirsin.',
+    'Bu dosya senin; okumaya da yazmaya da yetkin var. Çalışma klasörünün',
+    'dışında olması normal, izin sorulmadan yazabilirsin.',
+    'Geçmişte ne öğrendiğine bakmak için Read ile aç.',
     'Yeni ve doğruladığın bir bilgi edindiysen dosyayı Edit ile güncelle:',
     'en üste bugünün tarihiyle "## GG.AA.YYYY" başlığı aç ve altına yaz.',
+    'Dosya boşsa ya da "Henüz kayıt yok" yazıyorsa Write ile baştan yaz.',
     'Eskiyen bir bilgi gördüğünde onu düzelt; yanlış bilgiyi öylece bırakma.',
     'Dosyayı şişirme: her madde kısa, somut ve uygulanabilir olsun.',
     '--- DEFTER SONU ---',
@@ -55,8 +58,23 @@ function hafizaDosyaNotu(ajanKey: string): string {
   ].join('\n')
 }
 
-/** Egitim turunda herkes arastirabilsin, kimse yazamasin. */
-const EGITIM_ARACLARI = ['Read', 'Grep', 'Glob', 'WebSearch', 'WebFetch', 'TodoWrite']
+/**
+ * Egitim turunda herkes arastirir; tek yazabildigi yer kendi hafiza defteri.
+ *
+ * Write/Edit listede olmazsa ajan defterini guncelleyemez -- prompt ona
+ * "defterini Edit ile guncelle" derken aracin elinde olmamasi sessiz bir
+ * celiski yaratiyordu. Nereye yazabilecegini izin kapisi sinirlar.
+ */
+const EGITIM_ARACLARI = [
+  'Read',
+  'Grep',
+  'Glob',
+  'WebSearch',
+  'WebFetch',
+  'TodoWrite',
+  'Write',
+  'Edit'
+]
 const EGITIM_LIDER_ARACLARI = [...EGITIM_ARACLARI, 'Agent', 'SendMessage']
 
 /** Calismanin turu: normal is, egitim turu ya da proje denetimi. */
@@ -220,11 +238,19 @@ export function briefCalistir(
       CLAUDE_AGENT_SDK_DISABLE_BUILTIN_AGENTS: '1'
     },
     canUseTool: async (tool, input) => {
-      // Egitim turu: hicbir sey yazilmaz, komut calistirilmaz.
-      if (egitim && (YAZAN_ARACLAR.has(tool) || tool === 'Bash')) {
-        return {
-          behavior: 'deny' as const,
-          message: 'Bu bir eğitim turu; dosya yazmak ve komut çalıştırmak kapalı. Yalnızca araştır ve öğrendiklerini özetle.'
+      // Egitim turu: proje dosyalarina dokunulmaz, komut calistirilmaz.
+      // Tek istisna ajanin kendi hafiza defteri: ogrendigini oraya yazar.
+      if (egitim) {
+        const karar = egitimAracKarari(hafizaDizini(), tool, input)
+        if (karar === 'izin') return { behavior: 'allow' as const, updatedInput: input }
+        if (karar === 'red') {
+          return {
+            behavior: 'deny' as const,
+            message:
+              tool === 'Bash'
+                ? 'Bu bir eğitim turu; komut çalıştırmak kapalı. Yalnızca araştır ve öğrendiklerini defterine yaz.'
+                : 'Bu bir eğitim turu; proje dosyalarına yazmak kapalı. Yalnızca kendi hafıza defterine yazabilirsin.'
+          }
         }
       }
 

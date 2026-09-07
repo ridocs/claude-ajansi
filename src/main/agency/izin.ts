@@ -27,6 +27,30 @@ export function icerideMi(workspace: string, hedef: string): boolean {
 export const YAZAN_ARACLAR = new Set(['Write', 'Edit', 'NotebookEdit', 'MultiEdit'])
 
 /**
+ * Egitim turunda bir arac cagrisinin sonucu.
+ *
+ * Egitim turunda ajan proje dosyalarina dokunmaz ve komut calistirmaz, ama
+ * kendi hafiza defterini yazabilmesi gerekir: prompt ona "defterini guncelle"
+ * derken kapinin butun yazma araclarini reddetmesi sessiz bir celiskiydi ve
+ * hicbir ajan .md dosyasi olusturamiyordu.
+ */
+export type EgitimKarari = 'izin' | 'red' | 'ilgisiz'
+
+/** Egitim turunda yazma ve komut araclarina karar verir. */
+export function egitimAracKarari(
+  hafizaKlasoru: string,
+  tool: string,
+  input: Record<string, unknown>
+): EgitimKarari {
+  if (tool === 'Bash') return 'red'
+  if (!YAZAN_ARACLAR.has(tool)) return 'ilgisiz'
+
+  const yol = String(input.file_path ?? input.notebook_path ?? '')
+  if (!yol) return 'red'
+  return icerideMi(hafizaKlasoru, yol) ? 'izin' : 'red'
+}
+
+/**
  * Bir araç çağrısının kullanıcı onayı gerektirip gerektirmediğine karar verir.
  * Kendi başına hiçbir şeyi engellemez; kararı çağırana bildirir.
  */
