@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import { Maximize2, Minus, Plus } from 'lucide-react'
 import { ASAMA_ETIKET, ASAMA_RENK, type Graf } from '../beyinAgi'
 
 interface Props {
@@ -24,6 +25,18 @@ export default function BeyinGrafi({ graf, secili, onSec, vurguKonu }: Props): R
   const [yakinlik, setYakinlik] = useState(1)
   const [kaydir, setKaydir] = useState({ x: 0, y: 0 })
   const surukle = useRef<{ x: number; y: number; bx: number; by: number } | null>(null)
+
+  const EN_AZ = 0.5
+  const EN_COK = 2.6
+
+  const yakinlas = useCallback((adim: number) => {
+    setYakinlik((y) => Math.min(EN_COK, Math.max(EN_AZ, Number((y + adim).toFixed(2)))))
+  }, [])
+
+  const sifirla = useCallback(() => {
+    setYakinlik(1)
+    setKaydir({ x: 0, y: 0 })
+  }, [])
 
   const dugumHarita = useMemo(
     () => new Map(graf.dugumler.map((d) => [d.key, d])),
@@ -52,6 +65,7 @@ export default function BeyinGrafi({ graf, secili, onSec, vurguKonu }: Props): R
       <svg
         viewBox={`0 0 ${G} ${Y}`}
         className="graf"
+        preserveAspectRatio="xMidYMid meet"
         role="img"
         aria-label="Ajan hafıza ağı"
         onMouseDown={(e) => {
@@ -68,10 +82,6 @@ export default function BeyinGrafi({ graf, secili, onSec, vurguKonu }: Props): R
         onMouseLeave={() => {
           surukle.current = null
           setOdak(null)
-        }}
-        onWheel={(e) => {
-          const yeni = Math.min(2.4, Math.max(0.55, yakinlik - e.deltaY * 0.0012))
-          setYakinlik(yeni)
         }}
         onClick={(e) => {
           if (e.target === e.currentTarget) onSec(null)
@@ -189,18 +199,30 @@ export default function BeyinGrafi({ graf, secili, onSec, vurguKonu }: Props): R
         </g>
       </svg>
 
-      <div className="graf-yardim">
-        <span>tekerlek: yakınlaştır</span>
-        <span>sürükle: kaydır</span>
+      <div className="graf-kontrol">
         <button
           type="button"
-          className="bag"
-          onClick={() => {
-            setYakinlik(1)
-            setKaydir({ x: 0, y: 0 })
-          }}
+          className="graf-dugme"
+          onClick={() => yakinlas(-0.2)}
+          disabled={yakinlik <= EN_AZ}
+          title="Uzaklaştır"
+          aria-label="Uzaklaştır"
         >
-          sıfırla
+          <Minus size={14} />
+        </button>
+        <span className="graf-oran">%{Math.round(yakinlik * 100)}</span>
+        <button
+          type="button"
+          className="graf-dugme"
+          onClick={() => yakinlas(0.2)}
+          disabled={yakinlik >= EN_COK}
+          title="Yakınlaştır"
+          aria-label="Yakınlaştır"
+        >
+          <Plus size={14} />
+        </button>
+        <button type="button" className="graf-dugme" onClick={sifirla} title="Sığdır" aria-label="Sığdır">
+          <Maximize2 size={13} />
         </button>
       </div>
     </div>

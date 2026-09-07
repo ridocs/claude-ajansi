@@ -130,6 +130,11 @@ p {
   padding: 20px 22px 26px;
 }
 
+/* Kendi yuksekligini yoneten sayfalar icerik kaydirmasini kapatir. */
+.icerik:has(> .hafiza-sabit) {
+  overflow: hidden;
+}
+
 .icerik-panelli {
   display: grid;
   grid-template-columns: 1fr var(--sag-genislik);

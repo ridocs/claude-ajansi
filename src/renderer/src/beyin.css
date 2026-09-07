@@ -41,13 +41,15 @@
   display: grid;
   grid-template-columns: 1fr minmax(260px, 320px);
   gap: 16px;
-  align-items: start;
   min-height: 0;
+  /* Ust cubuk, alt cubuk, sayfa basligi ve dolgu disinda kalan yukseklik. */
+  height: calc(100vh - var(--ust-yukseklik) - var(--alt-yukseklik) - 122px);
 }
 
 @media (max-width: 1100px) {
   .ag-duzen {
     grid-template-columns: 1fr;
+    height: auto;
   }
 }
 
@@ -56,6 +58,8 @@
   flex-direction: column;
   gap: 14px;
   min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 /* ================================================== graf */
@@ -67,14 +71,17 @@
   overflow: hidden;
   background: #070c16;
   line-height: 0;
+  min-height: 0;
+  height: 100%;
 }
 
 .graf {
   width: 100%;
-  height: auto;
+  height: 100%;
   display: block;
   cursor: grab;
   user-select: none;
+  touch-action: none;
 }
 
 .graf:active {
@@ -143,21 +150,49 @@
   }
 }
 
-.graf-yardim {
+.graf-kontrol {
   position: absolute;
   right: 12px;
-  bottom: 10px;
+  bottom: 12px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 4px;
+  background: rgba(7, 12, 22, 0.9);
+  border: 1px solid var(--cizgi-acik);
+  border-radius: 8px;
+  padding: 4px;
+  line-height: 1;
+}
+
+.graf-dugme {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--metin-2);
+  cursor: pointer;
+}
+
+.graf-dugme:hover:not(:disabled) {
+  background: var(--panel);
+  color: var(--metin);
+}
+
+.graf-dugme:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.graf-oran {
   font-family: var(--f-mono);
-  font-size: 9.5px;
+  font-size: 10.5px;
   color: var(--metin-3);
-  background: rgba(7, 12, 22, 0.8);
-  border: 1px solid var(--cizgi);
-  border-radius: 14px;
-  padding: 5px 11px;
-  line-height: 1.4;
+  min-width: 38px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ================================================== aşama listesi */

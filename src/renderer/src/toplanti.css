@@ -343,3 +343,9 @@
   font-family: var(--f-mono);
   font-size: 11.5px;
 }
+
+/* Ag gorunumu tek ekrana sigar: sayfa kaymaz. */
+.hafiza-sabit {
+  height: 100%;
+  overflow: hidden;
+}
