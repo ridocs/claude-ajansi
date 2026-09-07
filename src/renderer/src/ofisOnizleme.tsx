@@ -5,6 +5,7 @@
 import { StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import OfisGorunumu from './bilesenler/OfisGorunumu'
+import Projeler from './sayfalar/Projeler'
 import { ajansDurumuHesapla } from './ajansDurumu'
 import type { AgencyEvent, Department, DepartmentId } from '../../shared/types'
 import './styles.css'
@@ -166,10 +167,34 @@ function Onizleme(): React.JSX.Element {
   )
 }
 
+// Projeler sayfasi ayarlari main tarafindan okur; onizlemede sahtesi verilir.
+;(window as unknown as { ajans: unknown }).ajans = {
+  ayarlar: async () => ({ klasorGecmisi: ['C:\projeler\tanitim-sitesi'] })
+}
+
+function Sayfa(): React.JSX.Element {
+  const hangi = new URLSearchParams(window.location.search).get('sayfa')
+  if (hangi === 'projeler') {
+    return (
+      <div className="kabuk-govde" style={{ padding: 20 }}>
+        <Projeler
+          klasor="C:\projeler\tanitim-sitesi"
+          calisiyor={false}
+          onKlasorSec={() => {}}
+          onKlasorKullan={() => {}}
+          onBaslat={async () => {}}
+          onDenetle={async () => {}}
+        />
+      </div>
+    )
+  }
+  return <Onizleme />
+}
+
 const kok = document.getElementById('kok')
 if (!kok) throw new Error('Kok eleman bulunamadi')
 createRoot(kok).render(
   <StrictMode>
-    <Onizleme />
+    <Sayfa />
   </StrictMode>
 )

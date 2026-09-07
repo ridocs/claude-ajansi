@@ -560,3 +560,41 @@
 .giris::placeholder {
   color: var(--metin-3);
 }
+
+/* ================================================== proje denetimi */
+
+.denetim-govde {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.denetim-aciklama {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--metin-2);
+  max-width: 62ch;
+}
+
+.denetim-adimlar {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+  padding-left: 19px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--metin-3);
+}
+
+.denetim-adimlar li::marker {
+  color: var(--mavi-acik);
+  font-family: var(--f-mono);
+  font-size: 11px;
+}
+
+.denetim-uyari {
+  font-size: 11.5px;
+  color: var(--metin-3);
+}

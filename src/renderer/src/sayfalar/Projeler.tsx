@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Check, FolderOpen, FolderPlus, Rocket } from 'lucide-react'
+import { Check, FolderOpen, FolderPlus, Rocket, ScanSearch } from 'lucide-react'
 import { kisaKlasor } from '../ajansDurumu'
 import { PROJE_SABLONLARI, type ProjeSablonu } from '../projeSablonlari'
 
@@ -9,6 +9,8 @@ interface Props {
   onKlasorSec: () => void
   onKlasorKullan: (klasor: string) => void
   onBaslat: (brief: string) => Promise<void>
+  /** Mevcut klasoru mudure inceletir: once tespit, sonra eksik kapatma. */
+  onDenetle: () => Promise<void>
 }
 
 function projeAdi(yol: string): string {
@@ -21,7 +23,8 @@ export default function Projeler({
   calisiyor,
   onKlasorSec,
   onKlasorKullan,
-  onBaslat
+  onBaslat,
+  onDenetle
 }: Props): React.JSX.Element {
   const [gecmis, setGecmis] = useState<string[]>([])
   const [secili, setSecili] = useState<ProjeSablonu | null>(null)
@@ -55,6 +58,39 @@ export default function Projeler({
           Klasör seç
         </button>
       </div>
+
+      {/* --- var olan projeyi denetle --- */}
+      <section className="kutu">
+        <div className="kutu-baslik">
+          <h3>Mevcut Projeyi Denetle</h3>
+          {klasor && <span className="bag">{projeAdi(klasor)}</span>}
+        </div>
+        <div className="kutu-govde denetim-govde">
+          <p className="denetim-aciklama">
+            Müdür klasörü kendisi okuyup projeyi öğrenir, sonra sekiz departmanın
+            hepsi mevcut sistemi kendi alanından test eder. Çıkan bulgular tek bir
+            öncelikli listede toplanır, sana sunulur ve eksikler ilgili ekibe
+            kapattırılır.
+          </p>
+          <ol className="denetim-adimlar">
+            <li>Müdür projeyi okur ve ne olduğunu çıkarır</li>
+            <li>Bütün departmanlar test eder — bu turda kimse dosya yazmaz</li>
+            <li>Bulgular önceliklendirilir ve sunulur</li>
+            <li>Eksikler sahibi olan departmana kapattırılır</li>
+            <li>Müdür her maddeyi dosyayı açarak doğrular</li>
+          </ol>
+          <button
+            type="button"
+            className="dugme birincil"
+            onClick={() => void onDenetle()}
+            disabled={!klasor || calisiyor}
+          >
+            <ScanSearch size={15} />
+            Projeyi denetle ve eksikleri kapat
+          </button>
+          {!klasor && <span className="denetim-uyari">Önce bir klasör seç.</span>}
+        </div>
+      </section>
 
       {/* --- yeni proje başlat --- */}
       <section className="kutu">

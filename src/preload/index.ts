@@ -39,6 +39,8 @@ const ajans = {
     ipcRenderer.invoke('ajans:brief-calistir', brief),
   egit: (workspace: string): Promise<{ ok: boolean; detail: string }> =>
     ipcRenderer.invoke('ajans:egit', workspace),
+  denetle: (workspace: string): Promise<{ ok: boolean; detail: string }> =>
+    ipcRenderer.invoke('ajans:denetle', workspace),
 
   dosyaAc: (yol: string): Promise<{ ok: boolean; detail: string }> =>
     ipcRenderer.invoke('ajans:dosya-ac', yol),

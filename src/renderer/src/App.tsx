@@ -183,6 +183,26 @@ export default function App(): React.JSX.Element {
     }
   }, [klasor])
 
+  /** Denetim: mudur klasoru ogrenir, ekip test eder, eksikler kapanir. */
+  const denetle = useCallback(async () => {
+    setOlaylar([])
+    setOzet(null)
+    setHal('calisiyor')
+    const cevap = await window.ajans.denetle(klasor)
+    if (!cevap.ok) {
+      setHal('bosta')
+      setOzet({
+        ok: false,
+        subtype: 'baslatilamadi',
+        costUsd: 0,
+        durationMs: 0,
+        result: cevap.detail
+      })
+    } else {
+      setSayfa('komut')
+    }
+  }, [klasor])
+
   const durdur = useCallback(() => void window.ajans.durdur(), [])
   const oturumuKapat = useCallback(() => void window.ajans.oturumuKapat(), [])
 
@@ -244,6 +264,7 @@ export default function App(): React.JSX.Element {
               setSayfa('komut')
               await briefGonder(brief)
             }}
+            onDenetle={denetle}
           />
         )
       case 'raporlar':

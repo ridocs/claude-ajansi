@@ -6,6 +6,7 @@ import {
 } from '@anthropic-ai/claude-agent-sdk'
 import { randomUUID } from 'node:crypto'
 import { EGITIM_TALIMATI, egitimPrompt } from './egitim'
+import { DENETIM_TALIMATI, denetimPrompt } from './denetim'
 import { hafizaBolumu, hafizaDizini, hafizaDosyaYolu } from './hafiza'
 import { ekipBilgisi } from './hafizaPaylasim'
 import { ogrenmeyeDeger } from './ogrenme'
@@ -58,12 +59,23 @@ function hafizaDosyaNotu(ajanKey: string): string {
 const EGITIM_ARACLARI = ['Read', 'Grep', 'Glob', 'WebSearch', 'WebFetch', 'TodoWrite']
 const EGITIM_LIDER_ARACLARI = [...EGITIM_ARACLARI, 'Agent', 'SendMessage']
 
+/** Calismanin turu: normal is, egitim turu ya da proje denetimi. */
+export type CalismaKip = 'is' | 'egitim' | 'denetim'
+
 /** Kadroyu Agent SDK'nın beklediği biçime çevirir. */
-function ajanTanimlari(egitim: boolean): Record<string, AgentDefinition> {
+function ajanTanimlari(kip: CalismaKip): Record<string, AgentDefinition> {
   const { agents, departments } = buildRoster()
   const tanimlar: Record<string, AgentDefinition> = {}
+  const egitim = kip === 'egitim'
   for (const a of agents) {
     const lider = a.role === 'lider'
+    // Denetim kipinde ajan hem ekibini bilir hem denetim talimatini alir:
+    // tespit turunda okur, onarim turunda yalnizca listedeki maddeyi kapatir.
+    const ekEk =
+      kip === 'egitim'
+        ? EGITIM_TALIMATI
+        : ekipBilgisi({ ajanKey: a.key, departmanlar: departments, kadro: agents }) +
+          (kip === 'denetim' ? DENETIM_TALIMATI : '')
     tanimlar[a.key] = {
       description: `${a.title}. ${a.expertise}`,
       // Ajanin kendi birikimi + ekibinin bildiklerinin ozeti.
@@ -72,7 +84,7 @@ function ajanTanimlari(egitim: boolean): Record<string, AgentDefinition> {
         a.prompt +
         hafizaDosyaNotu(a.key) +
         hafizaBolumu(a.key) +
-        (egitim ? EGITIM_TALIMATI : ekipBilgisi({ ajanKey: a.key, departmanlar: departments, kadro: agents })),
+        ekEk,
       tools: egitim ? (lider ? EGITIM_LIDER_ARACLARI : EGITIM_ARACLARI) : a.tools,
       model: a.model,
       effort: a.effort,
@@ -138,6 +150,11 @@ export interface CalismaSecenek {
   onOgrenme?: (ajanKey: string, rapor: string) => void
   /** Egitim turu: ajanlar arastirir, hicbir dosyaya dokunmaz. */
   egitim?: boolean
+  /**
+   * Denetim turu: mudur once klasoru ogrenir, butun departmanlar mevcut
+   * sistemi test eder, sonra bulunan eksikler kapatilir.
+   */
+  denetim?: boolean
 }
 
 export interface CalismaKontrol {
@@ -172,11 +189,17 @@ export function briefCalistir(
     (parentToolUseId && ajanKimligi.get(parentToolUseId)) || 'mudur'
 
   const egitim = secenek.egitim === true
+  const kip: CalismaKip = egitim ? 'egitim' : secenek.denetim === true ? 'denetim' : 'is'
 
   const options: Options = {
     cwd: brief.workspace,
-    systemPrompt: egitim ? egitimPrompt(departments) : mudurPrompt(departments),
-    agents: ajanTanimlari(egitim),
+    systemPrompt:
+      kip === 'egitim'
+        ? egitimPrompt(departments)
+        : kip === 'denetim'
+          ? denetimPrompt(departments)
+          : mudurPrompt(departments),
+    agents: ajanTanimlari(kip),
     // Müdürün kendi araçları: dağıtır, denetler, kendisi kod yazmaz.
     allowedTools: ['Agent', 'Read', 'Grep', 'Glob', 'TodoWrite', 'SendMessage'],
     // 'acceptEdits' yazma araclarini canUseTool'a ugramadan onaylardi;
