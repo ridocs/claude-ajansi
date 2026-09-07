@@ -3,3 +3,7 @@ out/
 dist/
 .env
 *.log
+
+# derleme artiklari
+*.tsbuildinfo
+.claude/worktrees/
