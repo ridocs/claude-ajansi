@@ -12,7 +12,9 @@ import type {
   OnayIstegi,
   RunSummary,
   SetupCheck,
-  ToplantiMesaji
+  ToplantiKaydi,
+  ToplantiMesaji,
+  ToplantiOzeti
 } from '../shared/types'
 
 export type { OnayIstegi }
@@ -99,6 +101,13 @@ const toplanti = {
   kapat: (): Promise<{ ok: boolean; detail: string }> => ipcRenderer.invoke('toplanti:kapat'),
   hafizayaYaz: (): Promise<{ ok: boolean; detail: string }> =>
     ipcRenderer.invoke('toplanti:hafizaya-yaz'),
+
+  gecmis: (): Promise<ToplantiOzeti[]> => ipcRenderer.invoke('toplanti:gecmis'),
+  gecmisOku: (id: string): Promise<ToplantiKaydi | null> =>
+    ipcRenderer.invoke('toplanti:gecmis-oku', id),
+  gecmisSil: (id: string): Promise<ToplantiOzeti[]> =>
+    ipcRenderer.invoke('toplanti:gecmis-sil', id),
+  yeni: (): Promise<{ ok: boolean; detail: string }> => ipcRenderer.invoke('toplanti:yeni'),
 
   mesajlariDinle: (geriCagir: (m: ToplantiMesaji) => void): (() => void) => {
     const sarmal = (_e: unknown, m: ToplantiMesaji): void => geriCagir(m)

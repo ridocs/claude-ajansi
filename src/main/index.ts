@@ -15,6 +15,12 @@ import {
   hafizaYazVeListele
 } from './agency/hafiza'
 import { toplantiBaslat, type ToplantiMesaji, type ToplantiOturumu } from './agency/toplanti'
+import {
+  toplantiKaydet,
+  toplantiListele,
+  toplantiOku,
+  toplantiSil
+} from './agency/toplantiGecmis'
 import { buildRoster } from './agency/roster'
 import type { AgencyEvent, Brief, RunSummary, SetupCheck } from '../shared/types'
 
@@ -30,6 +36,8 @@ let calismaOlaylari: AgencyEvent[] = []
 let toplantiPenceresi: BrowserWindow | null = null
 let toplanti: ToplantiOturumu | null = null
 let toplantiKaydi: ToplantiMesaji[] = []
+let toplantiId = ''
+let toplantiBasladi = 0
 let calismaBilgi: { workspace: string; brief: string; egitim: boolean; basladi: number } | null =
   null
 
@@ -111,6 +119,8 @@ function toplantiPenceresiAc(): void {
 
 function toplantiMesajiGonder(m: ToplantiMesaji): void {
   toplantiKaydi.push(m)
+  // Her mesajdan sonra diske yaz: pencere kapansa da konusma kaybolmaz.
+  if (toplantiId) toplantiKaydet(toplantiId, toplantiBasladi, toplantiKaydi)
   toplantiPenceresi?.webContents.send('toplanti:mesaj', m)
 }
 
@@ -310,6 +320,8 @@ ipcMain.handle('ajans:toplanti-ac', () => {
 ipcMain.handle('toplanti:gonder', (_olay, metin: string) => {
   if (!toplanti) {
     toplantiKaydi = []
+    toplantiBasladi = Date.now()
+    toplantiId = `${toplantiBasladi}-${randomUUID().slice(0, 8)}`
     toplanti = toplantiBaslat(metin, ayarlariOku().sonKlasor, toplantiMesajiGonder)
     toplantiPenceresi?.webContents.send('toplanti:durum', true)
     // Ilk mesaj toplantiBaslat icinde kuyruga giriyor; kayda da eklenmeli.
@@ -330,6 +342,25 @@ ipcMain.handle('toplanti:kapat', () => {
   toplanti = null
   toplantiPenceresi?.webContents.send('toplanti:durum', false)
   return { ok: true, detail: 'Toplantı bitti.' }
+})
+
+ipcMain.handle('toplanti:gecmis', () => toplantiListele())
+
+ipcMain.handle('toplanti:gecmis-oku', (_olay, id: string) => toplantiOku(id))
+
+ipcMain.handle('toplanti:gecmis-sil', (_olay, id: string) => {
+  toplantiSil(id)
+  return toplantiListele()
+})
+
+/** Suren toplantiyi kapatip yeni bir konusma icin temiz sayfa acar. */
+ipcMain.handle('toplanti:yeni', () => {
+  toplanti?.kapat()
+  toplanti = null
+  toplantiKaydi = []
+  toplantiId = ''
+  toplantiPenceresi?.webContents.send('toplanti:durum', false)
+  return { ok: true, detail: 'Yeni toplantı hazır.' }
 })
 
 ipcMain.handle('toplanti:hafizaya-yaz', () => {

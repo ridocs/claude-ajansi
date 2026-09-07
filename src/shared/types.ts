@@ -212,3 +212,21 @@ export interface ToplantiMesaji {
   metin: string
   at: number
 }
+
+/** Diske yazilan bir toplantinin tam kaydi. */
+export interface ToplantiKaydi {
+  id: string
+  baslik: string
+  basladi: number
+  guncellendi: number
+  mesajlar: ToplantiMesaji[]
+}
+
+/** Gecmis listesinde gorunen hafif ozet. */
+export interface ToplantiOzeti {
+  id: string
+  baslik: string
+  basladi: number
+  guncellendi: number
+  mesajSayisi: number
+}

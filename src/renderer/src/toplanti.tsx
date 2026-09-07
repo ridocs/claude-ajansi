@@ -1,10 +1,11 @@
 import { StrictMode, useCallback, useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrainCog, Send, Square } from 'lucide-react'
-import type { ToplantiMesaji } from '../../shared/types'
+import { BrainCog, History, Plus, Send, Square, Trash2, X } from 'lucide-react'
+import type { ToplantiMesaji, ToplantiOzeti } from '../../shared/types'
 import Ahtapot from './bilesenler/Ahtapot'
 import './styles.css'
 import './toplanti.css'
+import './beyin.css'
 
 /** Mudurle bas basa toplanti penceresi. */
 function Toplanti(): React.JSX.Element {
@@ -13,6 +14,9 @@ function Toplanti(): React.JSX.Element {
   const [acik, setAcik] = useState(false)
   const [bekliyor, setBekliyor] = useState(false)
   const [kaydedildi, setKaydedildi] = useState<string | null>(null)
+  const [gecmisAcik, setGecmisAcik] = useState(false)
+  const [gecmis, setGecmis] = useState<ToplantiOzeti[]>([])
+  const [okunan, setOkunan] = useState<string | null>(null)
   const sonRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -33,10 +37,42 @@ function Toplanti(): React.JSX.Element {
   const gonder = useCallback(async () => {
     const m = metin.trim()
     if (!m || bekliyor) return
+    // Eski bir kayda bakarken yazmak yeni toplanti baslatir.
+    if (okunan) {
+      await window.toplanti.yeni()
+      setMesajlar([])
+      setOkunan(null)
+    }
     setMetin('')
     setBekliyor(true)
     await window.toplanti.gonder(m)
-  }, [metin, bekliyor])
+  }, [metin, bekliyor, okunan])
+
+  const gecmisYenile = useCallback(async () => {
+    setGecmis(await window.toplanti.gecmis())
+  }, [])
+
+  useEffect(() => {
+    if (gecmisAcik) void gecmisYenile()
+  }, [gecmisAcik, gecmisYenile])
+
+  /** Eski bir toplantiyi salt okunur olarak acar. */
+  const gecmisAc = useCallback(async (id: string) => {
+    const kayit = await window.toplanti.gecmisOku(id)
+    if (!kayit) return
+    setMesajlar(kayit.mesajlar)
+    setOkunan(id)
+    setGecmisAcik(false)
+  }, [])
+
+  /** Temiz sayfa: suren toplantiyi kapatir. */
+  const yeniToplanti = useCallback(async () => {
+    await window.toplanti.yeni()
+    setMesajlar([])
+    setOkunan(null)
+    setGecmisAcik(false)
+    setBekliyor(false)
+  }, [])
 
   const hafizayaYaz = useCallback(async () => {
     const sonuc = await window.toplanti.hafizayaYaz()
@@ -53,7 +89,25 @@ function Toplanti(): React.JSX.Element {
           <span className="marka-alt">fikir alışverişi ve karar alma</span>
         </span>
         <div className="toplanti-eylem">
-          {mesajlar.length > 1 && (
+          <button
+            type="button"
+            className="ikon-dugme"
+            title="Geçmiş toplantılar"
+            onClick={() => setGecmisAcik((v) => !v)}
+          >
+            {gecmisAcik ? <X size={15} /> : <History size={15} />}
+          </button>
+          {(mesajlar.length > 0 || okunan) && (
+            <button
+              type="button"
+              className="ikon-dugme"
+              title="Yeni toplantı"
+              onClick={() => void yeniToplanti()}
+            >
+              <Plus size={15} />
+            </button>
+          )}
+          {mesajlar.length > 1 && !okunan && (
             <button
               type="button"
               className="dugme"
@@ -70,6 +124,47 @@ function Toplanti(): React.JSX.Element {
           </span>
         </div>
       </header>
+
+      {gecmisAcik && (
+        <div className="gecmis-panel">
+          {gecmis.length === 0 ? (
+            <p className="bos">Henüz kayıtlı toplantı yok.</p>
+          ) : (
+            <ul>
+              {gecmis.map((g) => (
+                <li key={g.id} className={okunan === g.id ? 'gecmis-oge secili' : 'gecmis-oge'}>
+                  <button type="button" onClick={() => void gecmisAc(g.id)}>
+                    <span className="gecmis-oge-baslik">{g.baslik}</span>
+                    <span className="gecmis-oge-alt">
+                      {new Date(g.guncellendi).toLocaleString('tr-TR', {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}{' '}
+                      · {g.mesajSayisi} mesaj
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="bag"
+                    title="Sil"
+                    onClick={() => void window.toplanti.gecmisSil(g.id).then(setGecmis)}
+                  >
+                    <Trash2 size={11} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {okunan && (
+        <div className="toplanti-bilgi okunan">
+          Geçmiş bir toplantıyı okuyorsun. Yazmaya başlarsan yeni bir toplantı açılır.
+        </div>
+      )}
 
       <main className="toplanti-govde">
         {mesajlar.length === 0 && (

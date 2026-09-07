@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Brain, GraduationCap, Pencil, Save, Search, Trash2, X } from 'lucide-react'
+import { Brain, GraduationCap, List, Network, Pencil, Save, Search, Trash2, X } from 'lucide-react'
 import type { AgentSpec, Department, HafizaKaydi } from '../../../shared/types'
 import { ajanAdi } from '../ajansDurumu'
 import { gorunumAl } from '../departmanMeta'
+import { ASAMA_ETIKET, ASAMA_RENK, asamaBul, grafKur } from '../beyinAgi'
+import BeyinGrafi from '../bilesenler/BeyinGrafi'
 
 interface Props {
   departmanlar: Department[]
@@ -30,6 +32,8 @@ export default function Hafiza({
   const [duzenle, setDuzenle] = useState(false)
   const [taslak, setTaslak] = useState('')
   const [sorgu, setSorgu] = useState('')
+  const [gorunum, setGorunum] = useState<'liste' | 'ag'>('liste')
+  const [vurguKonu, setVurguKonu] = useState<string | null>(null)
 
   const yenile = useCallback(async () => {
     setHafiza(await window.ajans.hafiza())
@@ -51,6 +55,11 @@ export default function Hafiza({
   const seciliAjan = secili ? kadro.find((a) => a.key === secili) : undefined
 
   const toplamBoyut = hafiza.reduce((t, h) => t + h.boyut, 0)
+
+  const graf = useMemo(
+    () => grafKur({ departmanlar, kadro, hafiza, renkAl: (id) => gorunumAl(id).renk }),
+    [departmanlar, kadro, hafiza]
+  )
 
   /** Arama: ajan adında, uzmanlıkta ve hafıza içeriğinde arar. */
   const eslesenler = useMemo(() => {
@@ -99,6 +108,22 @@ export default function Hafiza({
           </p>
         </div>
         <div className="filtreler">
+          <div className="gorunum-secici">
+            <button
+              type="button"
+              className={gorunum === 'liste' ? 'secici-dugme etkin' : 'secici-dugme'}
+              onClick={() => setGorunum('liste')}
+            >
+              <List size={13} /> Liste
+            </button>
+            <button
+              type="button"
+              className={gorunum === 'ag' ? 'secici-dugme etkin' : 'secici-dugme'}
+              onClick={() => setGorunum('ag')}
+            >
+              <Network size={13} /> Beyin ağı
+            </button>
+          </div>
           {hafiza.length > 0 && (
             <button type="button" className="dugme" onClick={() => void hepsiniSil()}>
               <Trash2 size={14} /> Tümünü sil
@@ -125,6 +150,99 @@ export default function Hafiza({
         </div>
       </div>
 
+      {gorunum === 'ag' ? (
+        <div className="ag-duzen">
+          <BeyinGrafi
+            graf={graf}
+            secili={secili}
+            onSec={(k) => {
+              setSecili(k)
+              setDuzenle(false)
+            }}
+            vurguKonu={vurguKonu}
+          />
+
+          <aside className="ag-yan">
+            <section className="kutu">
+              <div className="kutu-baslik">
+                <h3>Ağın Olgunluğu</h3>
+                <span className="bag">%{Math.round(graf.olgunluk * 100)}</span>
+              </div>
+              <div className="kutu-govde">
+                <ul className="asama-liste">
+                  {(['olgun', 'gelisen', 'filiz', 'bos'] as const).map((a) => {
+                    const sayi = graf.dugumler.filter((d) => d.asama === a).length
+                    return (
+                      <li key={a}>
+                        <span className="nokta" style={{ background: ASAMA_RENK[a] }} />
+                        {ASAMA_ETIKET[a]}
+                        <b>{sayi}</b>
+                      </li>
+                    )
+                  })}
+                </ul>
+                <p className="ipucu">
+                  Düğüm büyüdükçe o ajanın bilgisi artmış demektir. Renkli çizgiler ortak
+                  öğrenilmiş konuları gösterir.
+                </p>
+              </div>
+            </section>
+
+            <section className="kutu">
+              <div className="kutu-baslik">
+                <h3>Ortak Konular</h3>
+                {vurguKonu && (
+                  <button type="button" className="bag" onClick={() => setVurguKonu(null)}>
+                    <X size={12} /> temizle
+                  </button>
+                )}
+              </div>
+              <div className="kutu-govde">
+                {graf.konuSikligi.length === 0 ? (
+                  <p className="bos">Henüz konu çıkmadı. Ajansı eğit.</p>
+                ) : (
+                  <div className="konu-bulutu">
+                    {graf.konuSikligi.map((k) => (
+                      <button
+                        key={k.konu}
+                        type="button"
+                        className={vurguKonu === k.konu ? 'konu secili' : 'konu'}
+                        onClick={() => setVurguKonu(vurguKonu === k.konu ? null : k.konu)}
+                        title={`${k.sayi} ajan biliyor`}
+                      >
+                        {k.konu}
+                        <span>{k.sayi}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {seciliAjan && (
+              <section className="kutu">
+                <div className="kutu-baslik">
+                  <h3>{seciliAjan.title}</h3>
+                  <span
+                    className="rozet"
+                    style={{ color: ASAMA_RENK[asamaBul(seciliKayit?.boyut ?? 0)] }}
+                  >
+                    {ASAMA_ETIKET[asamaBul(seciliKayit?.boyut ?? 0)]}
+                  </span>
+                </div>
+                <div className="kutu-govde">
+                  <p className="ipucu">{seciliAjan.expertise}</p>
+                  {seciliKayit ? (
+                    <pre className="hafiza-metin">{seciliKayit.metin}</pre>
+                  ) : (
+                    <p className="bos">Bu ajan henüz bir şey öğrenmedi.</p>
+                  )}
+                </div>
+              </section>
+            )}
+          </aside>
+        </div>
+      ) : (
       <div className="hafiza-duzen">
         {/* --- sol: ajan listesi --- */}
         <section className="kutu hafiza-liste">
@@ -279,6 +397,7 @@ export default function Hafiza({
           )}
         </section>
       </div>
+      )}
     </div>
   )
 }
