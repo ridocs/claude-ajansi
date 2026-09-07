@@ -16,6 +16,30 @@ type AjanDurum = 'hazir' | 'calisiyor' | 'bitti' | 'hata' | 'kapali'
 const G = 1320
 const Y = 618
 
+// ---------------------------------------------------------------- masa geometrisi
+
+const G_MASA = 214
+/** Masa yuzeyi yarim daire: ust kenar yukari bombeli bir yay. */
+const KAVIS = -34
+const UST = 30
+const KALINLIK = 26
+
+/** Bezier uzerindeki nokta: x dogrusal, y kavise gore. */
+function kavisY(t: number): number {
+  return (1 - t) ** 2 * UST + 2 * (1 - t) * t * KAVIS + t ** 2 * UST
+}
+
+/**
+ * Masadaki i. uyenin masa-yerel konumu.
+ *
+ * Hem masayi cizen bilesen hem de ustteki baloncuk katmani ayni hesabi
+ * kullanir; boylece baloncuk her zaman ajanin tam tepesine oturur.
+ */
+function uyeYeri(i: number, adet: number): { t: number; x: number; y: number } {
+  const t = (i + 0.5) / adet
+  return { t, x: G_MASA * t, y: kavisY(t) }
+}
+
 /** Mudurun masasi solda; ekipler onun karsisinda yay ciziyor. */
 const MERKEZ = { x: 208, y: 336 }
 const YARICAP = 830
@@ -204,7 +228,6 @@ function Monitor({
   canli,
   gecikme,
   kimlik,
-  egim = 0
 }: {
   x: number
   y: number
@@ -213,11 +236,9 @@ function Monitor({
   canli: boolean
   gecikme: number
   kimlik: string
-  /** Masanin egimi; monitor karsi rotasyonla dik tutulur. */
-  egim?: number
 }): React.JSX.Element {
   return (
-    <g transform={`translate(${x} ${y}) rotate(${-egim} 14 14)`}>
+    <g transform={`translate(${x} ${y})`}>
       <rect x="11.5" y="21" width="5" height="5" fill="#1b2740" />
       <rect x="6" y="25" width="16" height="2.2" rx="1.1" fill="#25334e" />
       <rect x="0" y="0" width="28" height="22" rx="2.5" fill="#080f1c" stroke="#2b3c5e" />
@@ -248,51 +269,111 @@ function Monitor({
 
 // ---------------------------------------------------------------- ajan
 
-function Baloncuk({ metin, renk }: { metin: string; renk: string }): React.JSX.Element {
-  const kisa = metin.replace(/\s+/g, ' ').trim().slice(0, 26)
-  // Metin genisligi tahmini; textLength ile tasma kesin engelleniyor.
-  const yazi = Math.max(24, kisa.length * 3.5)
-  const g = Math.min(yazi + 14, 112)
-  const h = 15
+/** En fazla iki satira sigacak sekilde kelime kelime sarar. */
+function satirlaraBol(metin: string, satirBasinaHarf: number): string[] {
+  const kelimeler = metin.replace(/\s+/g, ' ').trim().split(' ')
+  const satirlar: string[] = []
+  let simdiki = ''
+
+  for (const k of kelimeler) {
+    if (!simdiki) {
+      simdiki = k
+    } else if (simdiki.length + 1 + k.length <= satirBasinaHarf) {
+      simdiki += ' ' + k
+    } else {
+      satirlar.push(simdiki)
+      simdiki = k
+      if (satirlar.length === 2) break
+    }
+  }
+  if (satirlar.length < 2 && simdiki) satirlar.push(simdiki)
+
+  // Ikinci satir tasiyorsa uc nokta ile bitir.
+  if (satirlar.length === 2 && satirlar[1].length > satirBasinaHarf) {
+    satirlar[1] = satirlar[1].slice(0, satirBasinaHarf - 1) + '…'
+  }
+  return satirlar.slice(0, 2)
+}
+
+/**
+ * Konusma baloncugu.
+ *
+ * Masa katmaninin disinda, ofis olceginde cizilir: hangi sirada olursa olsun
+ * ayni boyutta ve her zaman duz durur.
+ */
+function Baloncuk({
+  x,
+  y,
+  metin,
+  renk,
+  yon = 'alt'
+}: {
+  x: number
+  y: number
+  metin: string
+  renk: string
+  /** Baloncuk ajanin altinda mi ustunde mi duruyor. */
+  yon?: 'ust' | 'alt'
+}): React.JSX.Element {
+  const HARF = 30
+  const satirlar = satirlaraBol(metin, HARF)
+  const enUzun = Math.max(...satirlar.map((s) => s.length), 8)
+  // 10px Inter'da ortalama harf genisligi ~5.1px.
+  const g = Math.round(Math.min(enUzun * 5.1 + 18, HARF * 5.1 + 18))
+  const h = satirlar.length > 1 ? 32 : 21
+  const ustY = yon === 'alt' ? y + 8 : y - h - 8
 
   return (
-    <g className="baloncuk" transform={`translate(${-g / 2} -38)`}>
+    <g className="baloncuk" transform={`translate(${x - g / 2} ${ustY})`}>
       <rect
         width={g}
         height={h}
-        rx="4"
-        fill="rgba(9,15,27,.95)"
+        rx="7"
+        fill="rgba(8,13,24,.96)"
         stroke={renk}
-        strokeOpacity="0.55"
-        strokeWidth="0.7"
+        strokeOpacity="0.6"
+        strokeWidth="1"
       />
-      {/* kuyruk: ince ve kisa */}
+      {/* kuyruk her zaman ajana bakar */}
       <path
-        d={`M${g / 2 - 3} ${h} l3 4 l3 -4 Z`}
-        fill="rgba(9,15,27,.95)"
+        d={
+          yon === 'alt'
+            ? `M${g / 2 - 4.5} 0.5 l4.5 -6 l4.5 6 Z`
+            : `M${g / 2 - 4.5} ${h - 0.5} l4.5 6 l4.5 -6 Z`
+        }
+        fill="rgba(8,13,24,.96)"
         stroke={renk}
-        strokeOpacity="0.55"
-        strokeWidth="0.7"
+        strokeOpacity="0.6"
+        strokeWidth="1"
       />
-      <text
-        x={g / 2}
-        y={h - 4.6}
-        className="baloncuk-yazi"
-        fill="var(--metin-2)"
-        textLength={g - 10}
-        lengthAdjust="spacingAndGlyphs"
-      >
-        {kisa}
-      </text>
+      {satirlar.map((s, i) => (
+        <text
+          key={i}
+          x={g / 2}
+          y={(satirlar.length > 1 ? 14 : 14.5) + i * 12}
+          className="baloncuk-yazi"
+          fill="var(--metin-2)"
+        >
+          {s}
+        </text>
+      ))}
     </g>
   )
 }
 
-function YaziyorBaloncuk({ renk }: { renk: string }): React.JSX.Element {
-  const g = 26
-  const h = 13
+function YaziyorBaloncuk({
+  x,
+  y,
+  renk
+}: {
+  x: number
+  y: number
+  renk: string
+}): React.JSX.Element {
+  const g = 34
+  const h = 17
   return (
-    <g className="baloncuk" transform={`translate(${-g / 2} -36)`}>
+    <g className="baloncuk" transform={`translate(${x - g / 2} ${y + 8})`}>
       <rect
         width={g}
         height={h}
@@ -303,7 +384,7 @@ function YaziyorBaloncuk({ renk }: { renk: string }): React.JSX.Element {
         strokeWidth="0.7"
       />
       <path
-        d={`M${g / 2 - 2.5} ${h} l2.5 3.5 l2.5 -3.5 Z`}
+        d={`M${g / 2 - 4} 0.5 l4 -5.5 l4 5.5 Z`}
         fill="rgba(9,15,27,.95)"
         stroke={renk}
         strokeOpacity="0.5"
@@ -313,9 +394,9 @@ function YaziyorBaloncuk({ renk }: { renk: string }): React.JSX.Element {
         <circle
           key={i}
           className="yaziyor-nokta"
-          cx={7.5 + i * 5.5}
+          cx={10 + i * 7}
           cy={h / 2}
-          r="1.5"
+          r="2"
           fill={renk}
           style={{ animationDelay: `${i * 0.18}s` }}
         />
@@ -329,14 +410,12 @@ function Ajan({
   durum,
   gecikme,
   baslik,
-  soz,
   olcek = 1
 }: {
   renk: string
   durum: AjanDurum
   gecikme: number
   baslik: string
-  soz?: string
   olcek?: number
 }): React.JSX.Element {
   const calisiyor = durum === 'calisiyor'
@@ -344,10 +423,6 @@ function Ajan({
   return (
     <g className={`ajan ajan-${durum}`} style={{ animationDelay: `${gecikme}s` }}>
       <title>{baslik}</title>
-
-      {/* Baloncuk ajanın ölçeğine tabi değil: her masada aynı boyutta kalır. */}
-      {soz !== undefined &&
-        (soz ? <Baloncuk metin={soz} renk={renk} /> : <YaziyorBaloncuk renk={renk} />)}
 
       <g transform={`scale(${olcek})`}>
         <ellipse cx="0" cy="15" rx="11" ry="3" fill="rgba(0,0,0,.5)" />
@@ -390,16 +465,19 @@ function Faks({
   x,
   y,
   renk,
-  yeniGorev
+  yeniGorev,
+  olcek = 1
 }: {
   x: number
   y: number
   renk: string
   /** Yeni gorev geldiginde degisen anahtar; animasyonu yeniden baslatir. */
   yeniGorev?: string
+  /** Arka siradaki masalar kuculdugu icin faks buyutulerek dengelenir. */
+  olcek?: number
 }): React.JSX.Element {
   return (
-    <g transform={`translate(${x} ${y})`} className="faks">
+    <g transform={`translate(${x} ${y}) scale(${olcek})`} className="faks">
       {/* çıkan kâğıt: gövdenin arkasında, yukarı doğru sürünür */}
       {yeniGorev && (
         <g key={yeniGorev} className="faks-kagit">
@@ -470,7 +548,6 @@ function Masa({
   x,
   y,
   olcek,
-  egim,
   id,
   ad,
   renk,
@@ -482,7 +559,6 @@ function Masa({
   x: number
   y: number
   olcek: number
-  egim: number
   id: DepartmentId
   ad: string
   renk: string
@@ -491,23 +567,11 @@ function Masa({
   yeniGorev?: string
   onTikla?: () => void
 }): React.JSX.Element {
-  const G_MASA = 214
-  // Masa yuzeyi yarim daire: ust kenar yukari bombeli bir yay.
-  const KAVIS = -34
-  const UST = 30
-  const KALINLIK = 26
-
-  // Bezier uzerindeki nokta: x dogrusal, y kavise gore.
-  const kavisY = (t: number): number => (1 - t) ** 2 * UST + 2 * (1 - t) * t * KAVIS + t ** 2 * UST
-
-  const yerler = uyeler.map((u, i) => {
-    const t = (i + 0.5) / uyeler.length
-    return { u, t, x: G_MASA * t, y: kavisY(t) }
-  })
+  const yerler = uyeler.map((u, i) => ({ u, ...uyeYeri(i, uyeler.length) }))
 
   return (
     <g
-      transform={`translate(${x} ${y}) rotate(${egim}) scale(${olcek})`}
+      transform={`translate(${x} ${y}) scale(${olcek})`}
       className={onTikla ? 'masa-grup tiklanir' : 'masa-grup'}
       onClick={onTikla}
       role={onTikla ? 'button' : undefined}
@@ -541,7 +605,6 @@ function Masa({
           renk={renk}
           canli={u.durum === 'calisiyor'}
           gecikme={i * 0.42}
-          egim={egim}
         />
       ))}
 
@@ -556,6 +619,9 @@ function Masa({
         d={`M0 ${UST + KALINLIK} Q ${G_MASA / 2} ${KAVIS + KALINLIK} ${G_MASA} ${UST + KALINLIK} L ${G_MASA} ${UST + KALINLIK + 5} Q ${G_MASA / 2} ${KAVIS + KALINLIK + 5} 0 ${UST + KALINLIK + 5} Z`}
         fill="#121b2e"
       />
+
+      {/* faks: masanin sag ucunda; gorev gelince kagit cikarir */}
+      <Faks x={G_MASA - 24} y={kavisY(0.94) - 2} renk={renk} yeniGorev={yeniGorev} olcek={1.5} />
 
       {/* klavyeler: masa yüzeyinde, kavisi izler */}
       {yerler.map(({ u, x: kx, y: ky }, i) => (
@@ -577,14 +643,12 @@ function Masa({
             durum={u.durum}
             gecikme={(i % 4) * 0.55}
             baslik={`${ajanAdi(u.key)} — ${u.durum}`}
-            soz={u.soz}
             olcek={0.96 + Math.abs(t - 0.5) * 0.12}
           />
         </g>
       ))}
 
-      {/* Etiket masanın eğimini almaz: karşı rotasyonla düz kalır. */}
-      <g className="masa-etiket" transform={`rotate(${-egim} ${G_MASA / 2} -62)`}>
+      <g className="masa-etiket">
         <rect
           x={G_MASA / 2 - 75}
           y="-72"
@@ -634,10 +698,15 @@ function Sinyal({
     <g className="sinyal">
       {/* iz: sinyalin gectigi hat kisa sure parlar */}
       <path d={yol} stroke={renk} strokeWidth="1.6" fill="none" className="sinyal-iz" />
-      <circle r="4.5" fill={renk} className="sinyal-nokta">
+      {/* ucan gorev kagidi: mudurun fakstan gonderdigi is */}
+      <g className="sinyal-nokta">
+        <rect x="-6" y="-8" width="12" height="15" rx="1.4" fill="#eef3fb" />
+        <rect x="-3.6" y="-5" width="7.2" height="1.3" rx="0.65" fill={renk} />
+        <rect x="-3.6" y="-2.2" width="5.4" height="1.3" rx="0.65" fill="#8fa3c0" />
+        <rect x="-3.6" y="0.6" width="6.6" height="1.3" rx="0.65" fill="#8fa3c0" />
         <animateMotion dur="1.5s" repeatCount="1" fill="freeze" path={yol} />
-      </circle>
-      <circle r="9" fill={renk} opacity="0.3" className="sinyal-hale">
+      </g>
+      <circle r="13" fill={renk} opacity="0.3" className="sinyal-hale">
         <animateMotion dur="1.5s" repeatCount="1" fill="freeze" path={yol} />
       </circle>
     </g>
@@ -691,8 +760,6 @@ export default function OfisGorunumu({
         // Yay etkisi: kenarlar merkeze gore asagida
         y: satir.y + merkezdenUzaklik * 13,
         olcek: satir.olcek,
-        // Masalar mudure doner
-        egim: (sutun - 1.5) * -2.6,
         ad: gorunumAl(d.id).ad,
         renk: gorunumAl(d.id).renk,
         uyeler,
@@ -715,6 +782,53 @@ export default function OfisGorunumu({
     }
     return harita
   }, [ajans.sonAtamalar, departmanlar])
+
+  /**
+   * Konusan ajanlarin baloncuklari, ofis olceginde mutlak konumla.
+   *
+   * Masa katmanina girmiyorlar: arka siradaki masa 0.74 olcekli olsa bile
+   * baloncuk ayni boyutta ve duz kaliyor, komsu masa da ustunu ortmuyor.
+   */
+  const baloncuklar = useMemo(() => {
+    const liste: {
+      key: string
+      x: number
+      y: number
+      metin: string
+      renk: string
+      yon: 'ust' | 'alt'
+    }[] = []
+
+    // Mudurun baloncugu ekranlarinin ustunde: alt taraf unvan yazisiyla dolu.
+    if (sozler.has('mudur')) {
+      liste.push({
+        key: 'mudur',
+        x: MERKEZ.x,
+        y: MERKEZ.y - 54,
+        metin: sozler.get('mudur') ?? '',
+        renk: 'var(--turuncu)',
+        yon: 'ust'
+      })
+    }
+
+    for (const m of masalar) {
+      m.uyeler.forEach((u, i) => {
+        if (!sozler.has(u.key)) return
+        const yer = uyeYeri(i, m.uyeler.length)
+        liste.push({
+          key: u.key,
+          x: m.x + yer.x * m.olcek,
+          // Ajan masa-yerel y + 60'ta oturuyor; baloncuk onundeki bos zemine
+          // duser, boylece monitorleri ve masa basligini ortmez.
+          y: m.y + (yer.y + 60 + 26) * m.olcek,
+          metin: sozler.get(u.key) ?? '',
+          renk: m.renk,
+          yon: 'alt'
+        })
+      })
+    }
+    return liste
+  }, [masalar, sozler])
 
   /** Bir ajanın ofisteki koordinatı: sinyalin nereden nereye gideceğini bulur. */
   const ajanKonumu = useMemo(() => {
@@ -873,18 +987,19 @@ export default function OfisGorunumu({
             />
           </g>
           <Klavye
-            x={MERKEZ.x - 16}
-            y={-4}
+            x={MERKEZ.x - 58}
+            y={MERKEZ.y + 6}
             canli={mudurDurum === 'calisiyor'}
             renk="var(--turuncu)"
             gecikme={0}
           />
           {/* müdürün faksı: gelen brief buradan çıkar */}
           <Faks
-            x={MERKEZ.x + 86}
-            y={MERKEZ.y - 20}
+            x={MERKEZ.x + 88}
+            y={MERKEZ.y - 18}
             renk="var(--turuncu)"
             yeniGorev={ajans.sonAtamalar[0]?.id}
+            olcek={1.35}
           />
 
           <g transform={`translate(${MERKEZ.x} ${MERKEZ.y + 6})`}>
@@ -893,7 +1008,6 @@ export default function OfisGorunumu({
               durum={mudurDurum}
               gecikme={0}
               baslik="Müdür"
-              soz={mudurSoz}
               olcek={1.4}
             />
           </g>
@@ -921,6 +1035,17 @@ export default function OfisGorunumu({
           {sinyaller.map((s) => (
             <Sinyal key={s.id} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} renk={s.renk} />
           ))}
+        </g>
+
+        {/* Baloncuklar en üstte: masaların ölçeğine tabi değil, hep aynı boyut. */}
+        <g className="baloncuk-katmani">
+          {baloncuklar.map((b) =>
+            b.metin ? (
+              <Baloncuk key={b.key} x={b.x} y={b.y} metin={b.metin} renk={b.renk} yon={b.yon} />
+            ) : (
+              <YaziyorBaloncuk key={b.key} x={b.x} y={b.y} renk={b.renk} />
+            )
+          )}
         </g>
       </svg>
     </div>

@@ -24,6 +24,9 @@
 
 .sinyal-nokta {
   animation: sinyal-son 1.8s ease-out forwards;
+  /* animateMotion konumu belirler; olcek onun uzerine biner. */
+  transform-box: fill-box;
+  transform-origin: center;
 }
 
 .sinyal-hale {
@@ -34,18 +37,19 @@
 @keyframes sinyal-son {
   0% {
     opacity: 0;
-    r: 2;
+    transform: scale(0.4);
   }
-  12% {
+  14% {
     opacity: 1;
-    r: 4.5;
+    transform: scale(1);
   }
-  85% {
+  82% {
     opacity: 1;
+    transform: scale(1);
   }
   100% {
     opacity: 0;
-    r: 2;
+    transform: scale(0.5);
   }
 }
 
