@@ -7,6 +7,7 @@ import {
 import { randomUUID } from 'node:crypto'
 import { EGITIM_TALIMATI, egitimPrompt } from './egitim'
 import { hafizaBolumu } from './hafiza'
+import { ogrenmeyeDeger } from './ogrenme'
 import { YAZAN_ARACLAR, izinDegerlendir } from './izin'
 import { buildRoster, mudurPrompt } from './roster'
 import { anlikAl, farkAl } from './teslimat'
@@ -258,7 +259,12 @@ export function briefCalistir(
             const istatistik = cikti.toolStats ?? {}
 
             toplamToken += Number(cikti.totalTokens ?? 0)
-            if (secenek.onOgrenme && rapor) secenek.onOgrenme(kim, rapor)
+            // Hafizaya yalnizca uzmanlarin gercek arastirma ciktisi girer.
+            // Liderin ara notu ("uzmanlar hala calisiyor") bilgi degildir ve
+            // hafizayi kirletir.
+            if (secenek.onOgrenme && ogrenmeyeDeger(kim, rapor)) {
+              secenek.onOgrenme(kim, rapor)
+            }
             onEvent(
               olay('ajan-bitti', kim, rapor.slice(0, 2000), {
                 sureMs: Number(cikti.totalDurationMs ?? 0),
