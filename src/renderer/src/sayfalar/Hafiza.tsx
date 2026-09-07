@@ -19,6 +19,61 @@ function tarih(ms: number): string {
   return new Date(ms).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })
 }
 
+/**
+ * Hafizayi okunabilir bolumler halinde gosterir: tarih basliklari kart,
+ * "### " basliklari alt baslik, maddeler liste olur.
+ */
+function HafizaGovdesi({ metin }: { metin: string }): React.JSX.Element {
+  const bloklar: Array<{ tarih: string; satirlar: string[] }> = []
+
+  for (const ham of metin.split('\n')) {
+    const satir = ham.trimEnd()
+    const tarihBasligi = satir.match(/^##\s+(.+)$/)
+    if (tarihBasligi) {
+      bloklar.push({ tarih: tarihBasligi[1].trim(), satirlar: [] })
+      continue
+    }
+    if (bloklar.length === 0) bloklar.push({ tarih: '', satirlar: [] })
+    bloklar[bloklar.length - 1].satirlar.push(satir)
+  }
+
+  return (
+    <div className="hafiza-bloklar">
+      {bloklar.map((b, i) => (
+        <article key={i} className="hafiza-blok">
+          {b.tarih && <header className="hafiza-blok-tarih">{b.tarih}</header>}
+          <div className="hafiza-blok-govde">
+            {b.satirlar.map((satir, j) => {
+              const alt = satir.match(/^#{3,}\s+(.+)$/)
+              if (alt) {
+                return (
+                  <h4 key={j} className="hafiza-alt-baslik">
+                    {alt[1]}
+                  </h4>
+                )
+              }
+              const madde = satir.match(/^\s*[-*]\s+(.+)$/)
+              if (madde) {
+                return (
+                  <p key={j} className="hafiza-madde">
+                    {madde[1]}
+                  </p>
+                )
+              }
+              if (!satir.trim()) return null
+              return (
+                <p key={j} className="hafiza-paragraf">
+                  {satir}
+                </p>
+              )
+            })}
+          </div>
+        </article>
+      ))}
+    </div>
+  )
+}
+
 export default function Hafiza({
   departmanlar,
   klasor,
@@ -385,7 +440,7 @@ export default function Hafiza({
                     autoFocus
                   />
                 ) : seciliKayit ? (
-                  <pre className="hafiza-metin">{seciliKayit.metin}</pre>
+                  <HafizaGovdesi metin={seciliKayit.metin} />
                 ) : (
                   <p className="bos">
                     Bu ajan henüz bir şey öğrenmedi. &quot;Ajansı Eğit&quot; ile araştırma yaptırabilir

@@ -7,6 +7,7 @@ import {
 import { randomUUID } from 'node:crypto'
 import { EGITIM_TALIMATI, egitimPrompt } from './egitim'
 import { hafizaBolumu } from './hafiza'
+import { ekipBilgisi } from './hafizaPaylasim'
 import { ogrenmeyeDeger } from './ogrenme'
 import { YAZAN_ARACLAR, izinDegerlendir } from './izin'
 import { buildRoster, mudurPrompt } from './roster'
@@ -38,14 +39,18 @@ const EGITIM_LIDER_ARACLARI = [...EGITIM_ARACLARI, 'Agent', 'SendMessage']
 
 /** Kadroyu Agent SDK'nın beklediği biçime çevirir. */
 function ajanTanimlari(egitim: boolean): Record<string, AgentDefinition> {
-  const { agents } = buildRoster()
+  const { agents, departments } = buildRoster()
   const tanimlar: Record<string, AgentDefinition> = {}
   for (const a of agents) {
     const lider = a.role === 'lider'
     tanimlar[a.key] = {
       description: `${a.title}. ${a.expertise}`,
-      // Ajanin birikmis bilgisi promptunun sonuna eklenir.
-      prompt: a.prompt + hafizaBolumu(a.key) + (egitim ? EGITIM_TALIMATI : ''),
+      // Ajanin kendi birikimi + ekibinin bildiklerinin ozeti.
+      // Egitim turunda ekip bilgisi verilmez: herkes kendi arastirmasini yapar.
+      prompt:
+        a.prompt +
+        hafizaBolumu(a.key) +
+        (egitim ? EGITIM_TALIMATI : ekipBilgisi({ ajanKey: a.key, departmanlar: departments, kadro: agents })),
       tools: egitim ? (lider ? EGITIM_LIDER_ARACLARI : EGITIM_ARACLARI) : a.tools,
       model: a.model,
       effort: a.effort,

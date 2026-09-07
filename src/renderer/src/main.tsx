@@ -8,6 +8,7 @@ import './sayfalar2.css'
 import './ek.css'
 import './toplanti.css'
 import './beyin.css'
+import './hafizaGorunum.css'
 
 const kok = document.getElementById('kok')
 if (!kok) throw new Error('Kök eleman bulunamadi')

@@ -1,0 +1,70 @@
+/* Hafızanın bölümlere ayrılmış gösterimi. */
+
+.hafiza-bloklar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.hafiza-blok {
+  background: var(--zemin);
+  border: 1px solid var(--cizgi);
+  border-radius: var(--r-kucuk);
+  overflow: hidden;
+}
+
+.hafiza-blok-tarih {
+  padding: 7px 13px;
+  border-bottom: 1px solid var(--cizgi);
+  background: var(--panel);
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  color: var(--metin-3);
+}
+
+.hafiza-blok-govde {
+  padding: 11px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.hafiza-alt-baslik {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--mavi-acik);
+  margin-top: 7px;
+  letter-spacing: 0.01em;
+}
+
+.hafiza-blok-govde > .hafiza-alt-baslik:first-child {
+  margin-top: 0;
+}
+
+.hafiza-madde {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--metin-2);
+  padding-left: 14px;
+  position: relative;
+  overflow-wrap: anywhere;
+}
+
+.hafiza-madde::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0.72em;
+  width: 5px;
+  height: 1px;
+  background: var(--cizgi-acik);
+}
+
+.hafiza-paragraf {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--metin-2);
+  overflow-wrap: anywhere;
+}
