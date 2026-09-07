@@ -123,3 +123,9 @@ ${temiz}`
 
 ${mevcut}` : blok)
 }
+
+/** Arayuz icin: yazar ve guncel listeyi doner. */
+export function hafizaYazVeListele(ajanKey: string, metin: string): HafizaKaydi[] {
+  hafizaYaz(ajanKey, metin)
+  return hafizaListele()
+}

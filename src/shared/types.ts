@@ -204,3 +204,11 @@ export interface CalismaOzeti {
   dosyaSayisi: number
   ajanSayisi: number
 }
+
+/** Mudurle yapilan toplantidaki tek bir soz. */
+export interface ToplantiMesaji {
+  id: string
+  kim: 'sen' | 'mudur'
+  metin: string
+  at: number
+}

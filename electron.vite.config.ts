@@ -15,6 +15,13 @@ export default defineConfig({
     root: resolve('src/renderer'),
     plugins: [react()],
     resolve: { alias: { '@': resolve('src/renderer/src') } },
-    build: { rollupOptions: { input: { index: resolve('src/renderer/index.html') } } }
+    build: {
+      rollupOptions: {
+        input: {
+          index: resolve('src/renderer/index.html'),
+          toplanti: resolve('src/renderer/toplanti.html')
+        }
+      }
+    }
   }
 })

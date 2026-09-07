@@ -7,7 +7,14 @@ import { ayarlariOku, ayarlariYaz, klasorKullan, type Ayarlar } from './agency/a
 import { EGITIM_BRIEFI } from './agency/egitim'
 import { briefCalistir, type CalismaKontrol } from './agency/engine'
 import { calismaKaydet, gecmisListele, gecmisOku, gecmisSil, kayitHazirla } from './agency/gecmis'
-import { hafizaEkle, hafizaListele, hafizaSil, hafizaTemizle } from './agency/hafiza'
+import {
+  hafizaEkle,
+  hafizaListele,
+  hafizaSil,
+  hafizaTemizle,
+  hafizaYazVeListele
+} from './agency/hafiza'
+import { toplantiBaslat, type ToplantiMesaji, type ToplantiOturumu } from './agency/toplanti'
 import { buildRoster } from './agency/roster'
 import type { AgencyEvent, Brief, RunSummary, SetupCheck } from '../shared/types'
 
@@ -18,6 +25,11 @@ let calisma: CalismaKontrol | null = null
 
 /** Suren calismanin olaylari; bitince gecmise yazilir. */
 let calismaOlaylari: AgencyEvent[] = []
+
+/** Mudurle acilan toplanti penceresi ve oturumu. */
+let toplantiPenceresi: BrowserWindow | null = null
+let toplanti: ToplantiOturumu | null = null
+let toplantiKaydi: ToplantiMesaji[] = []
 let calismaBilgi: { workspace: string; brief: string; egitim: boolean; basladi: number } | null =
   null
 
@@ -56,6 +68,50 @@ function pencereOlustur(): void {
   } else {
     pencere.loadFile(join(__dirname, '../renderer/index.html'))
   }
+}
+
+function toplantiPenceresiAc(): void {
+  if (toplantiPenceresi && !toplantiPenceresi.isDestroyed()) {
+    toplantiPenceresi.focus()
+    return
+  }
+
+  toplantiPenceresi = new BrowserWindow({
+    width: 560,
+    height: 720,
+    minWidth: 420,
+    minHeight: 480,
+    show: false,
+    autoHideMenuBar: true,
+    backgroundColor: '#080c16',
+    title: 'Müdürle Toplantı',
+    parent: pencere ?? undefined,
+    webPreferences: {
+      preload: join(__dirname, '../preload/index.mjs'),
+      sandbox: false,
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  })
+
+  toplantiPenceresi.on('ready-to-show', () => toplantiPenceresi?.show())
+  toplantiPenceresi.on('closed', () => {
+    toplanti?.kapat()
+    toplanti = null
+    toplantiPenceresi = null
+  })
+
+  const devSunucu = process.env.ELECTRON_RENDERER_URL
+  if (devSunucu) {
+    void toplantiPenceresi.loadURL(`${devSunucu}/toplanti.html`)
+  } else {
+    void toplantiPenceresi.loadFile(join(__dirname, '../renderer/toplanti.html'))
+  }
+}
+
+function toplantiMesajiGonder(m: ToplantiMesaji): void {
+  toplantiKaydi.push(m)
+  toplantiPenceresi?.webContents.send('toplanti:mesaj', m)
 }
 
 function olayGonder(olay: AgencyEvent): void {
@@ -245,6 +301,49 @@ ipcMain.handle('ajans:gecmis-sil', (_olay, workspace: string, id: string) => {
   gecmisSil(workspace, id)
   return gecmisListele(workspace)
 })
+
+ipcMain.handle('ajans:toplanti-ac', () => {
+  toplantiPenceresiAc()
+  return { ok: true, detail: 'Toplantı penceresi açıldı.' }
+})
+
+ipcMain.handle('toplanti:gonder', (_olay, metin: string) => {
+  if (!toplanti) {
+    toplantiKaydi = []
+    toplanti = toplantiBaslat(metin, ayarlariOku().sonKlasor, toplantiMesajiGonder)
+    toplantiPenceresi?.webContents.send('toplanti:durum', true)
+    // Ilk mesaj toplantiBaslat icinde kuyruga giriyor; kayda da eklenmeli.
+    toplantiMesajiGonder({
+      id: `${Date.now()}-ilk`,
+      kim: 'sen',
+      metin,
+      at: Date.now()
+    })
+    return { ok: true, detail: 'Toplantı başladı.' }
+  }
+  toplanti.mesajGonder(metin)
+  return { ok: true, detail: 'İletildi.' }
+})
+
+ipcMain.handle('toplanti:kapat', () => {
+  toplanti?.kapat()
+  toplanti = null
+  toplantiPenceresi?.webContents.send('toplanti:durum', false)
+  return { ok: true, detail: 'Toplantı bitti.' }
+})
+
+ipcMain.handle('toplanti:hafizaya-yaz', () => {
+  const konusma = toplantiKaydi
+    .map((m) => `${m.kim === 'sen' ? 'Ajans sahibi' : 'Müdür'}: ${m.metin}`)
+    .join('\n\n')
+  if (!konusma.trim()) return { ok: false, detail: 'Kaydedilecek bir konuşma yok.' }
+  hafizaEkle('mudur', `### Toplantı notu\n${konusma.slice(0, 4000)}`)
+  return { ok: true, detail: 'Toplantı notu müdürün hafızasına yazıldı.' }
+})
+
+ipcMain.handle('ajans:hafiza-yaz', (_olay, ajanKey: string, metin: string) =>
+  hafizaYazVeListele(ajanKey, metin)
+)
 
 ipcMain.handle('ajans:hafiza', () => hafizaListele())
 ipcMain.handle('ajans:hafiza-sil', (_olay, ajanKey: string) => {

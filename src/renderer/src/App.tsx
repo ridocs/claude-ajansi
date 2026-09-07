@@ -20,6 +20,7 @@ import Ayarlar from './sayfalar/Ayarlar'
 import Dosyalar from './sayfalar/Dosyalar'
 import Ekip from './sayfalar/Ekip'
 import Gecmis from './sayfalar/Gecmis'
+import Hafiza from './sayfalar/Hafiza'
 import Gorevler from './sayfalar/Gorevler'
 import KomutMerkezi from './sayfalar/KomutMerkezi'
 import Ofis from './sayfalar/Ofis'
@@ -257,6 +258,16 @@ export default function App(): React.JSX.Element {
         return <Toplantilar olaylar={olaylar} onKomut={() => setSayfa('komut')} />
       case 'gecmis':
         return <Gecmis klasor={klasor} calisiyor={hal !== 'bosta'} />
+      case 'hafiza':
+        return (
+          <Hafiza
+            departmanlar={departmanlar}
+            klasor={klasor}
+            calisiyor={hal !== 'bosta'}
+            hazir={hazir}
+            onEgit={egit}
+          />
+        )
       case 'ekip':
         return (
           <Ekip

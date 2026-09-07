@@ -1,4 +1,5 @@
 import {
+  Brain,
   Building2,
   ClipboardList,
   History,
@@ -21,6 +22,7 @@ export type Sayfa =
   | 'projeler'
   | 'raporlar'
   | 'toplantilar'
+  | 'hafiza'
   | 'gecmis'
   | 'komut'
   | 'dosyalar'
@@ -40,6 +42,7 @@ const MENU: Array<{ id: Sayfa; ad: string; Ikon: typeof Home }> = [
   { id: 'projeler', ad: 'Projeler', Ikon: FolderKanban },
   { id: 'raporlar', ad: 'Raporlar', Ikon: LayoutGrid },
   { id: 'toplantilar', ad: 'Toplantılar', Ikon: Users2 },
+  { id: 'hafiza', ad: 'Hafıza', Ikon: Brain },
   { id: 'gecmis', ad: 'Geçmiş', Ikon: History },
   { id: 'komut', ad: 'Claude Command Center', Ikon: Terminal },
   { id: 'dosyalar', ad: 'Dosyalar', Ikon: FileText },

@@ -1,4 +1,4 @@
-import { Bell, Maximize2, Plus, Settings } from 'lucide-react'
+import { Bell, Maximize2, MessageSquare, Plus, Settings } from 'lucide-react'
 import Ahtapot from '../bilesenler/Ahtapot'
 
 interface Props {
@@ -47,6 +47,14 @@ export default function AltCubuk({
       </div>
 
       <div className="alt-sag">
+        <button
+          type="button"
+          className="ikon-dugme"
+          title="Müdürle toplantı"
+          onClick={() => void window.ajans.toplantiAc()}
+        >
+          <MessageSquare size={15} />
+        </button>
         <button type="button" className="ikon-dugme" title="Bildirimler">
           <Bell size={15} />
         </button>

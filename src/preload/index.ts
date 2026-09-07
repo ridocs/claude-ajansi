@@ -11,7 +11,8 @@ import type {
   HafizaKaydi,
   OnayIstegi,
   RunSummary,
-  SetupCheck
+  SetupCheck,
+  ToplantiMesaji
 } from '../shared/types'
 
 export type { OnayIstegi }
@@ -50,7 +51,12 @@ const ajans = {
   gecmisSil: (workspace: string, id: string): Promise<CalismaOzeti[]> =>
     ipcRenderer.invoke('ajans:gecmis-sil', workspace, id),
 
+  toplantiAc: (): Promise<{ ok: boolean; detail: string }> =>
+    ipcRenderer.invoke('ajans:toplanti-ac'),
+
   hafiza: (): Promise<HafizaKaydi[]> => ipcRenderer.invoke('ajans:hafiza'),
+  hafizaYaz: (ajanKey: string, metin: string): Promise<HafizaKaydi[]> =>
+    ipcRenderer.invoke('ajans:hafiza-yaz', ajanKey, metin),
   hafizaSil: (ajanKey: string): Promise<HafizaKaydi[]> =>
     ipcRenderer.invoke('ajans:hafiza-sil', ajanKey),
   hafizaTemizle: (): Promise<HafizaKaydi[]> => ipcRenderer.invoke('ajans:hafiza-temizle'),
@@ -86,6 +92,28 @@ const ajans = {
   }
 }
 
+/** Toplanti penceresinin kendi kucuk koprusu. */
+const toplanti = {
+  gonder: (metin: string): Promise<{ ok: boolean; detail: string }> =>
+    ipcRenderer.invoke('toplanti:gonder', metin),
+  kapat: (): Promise<{ ok: boolean; detail: string }> => ipcRenderer.invoke('toplanti:kapat'),
+  hafizayaYaz: (): Promise<{ ok: boolean; detail: string }> =>
+    ipcRenderer.invoke('toplanti:hafizaya-yaz'),
+
+  mesajlariDinle: (geriCagir: (m: ToplantiMesaji) => void): (() => void) => {
+    const sarmal = (_e: unknown, m: ToplantiMesaji): void => geriCagir(m)
+    ipcRenderer.on('toplanti:mesaj', sarmal)
+    return () => ipcRenderer.off('toplanti:mesaj', sarmal)
+  },
+  durumDinle: (geriCagir: (acik: boolean) => void): (() => void) => {
+    const sarmal = (_e: unknown, d: boolean): void => geriCagir(d)
+    ipcRenderer.on('toplanti:durum', sarmal)
+    return () => ipcRenderer.off('toplanti:durum', sarmal)
+  }
+}
+
 contextBridge.exposeInMainWorld('ajans', ajans)
+contextBridge.exposeInMainWorld('toplanti', toplanti)
 
 export type AjansAPI = typeof ajans
+export type ToplantiAPI = typeof toplanti
