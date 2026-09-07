@@ -113,9 +113,14 @@
 
 .dugum-ad {
   font-family: var(--f);
-  font-size: 9.5px;
+  font-size: 9px;
+  font-weight: 500;
   text-anchor: middle;
   pointer-events: none;
+  paint-order: stroke;
+  stroke: #070c16;
+  stroke-width: 2.5px;
+  stroke-linejoin: round;
 }
 
 .dugum-hale {

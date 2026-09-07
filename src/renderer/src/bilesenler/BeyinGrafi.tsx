@@ -109,10 +109,10 @@ export default function BeyinGrafi({ graf, secili, onSec, vurguKonu }: Props): R
                   y1={da.y}
                   x2={db.x}
                   y2={db.y}
-                  stroke={bilgi ? da.renk : 'var(--cizgi-acik)'}
-                  strokeWidth={bilgi ? Math.min(1 + b.guc * 0.5, 3.4) : 1}
-                  strokeOpacity={solgun ? 0.06 : bilgi ? 0.42 : 0.22}
-                  strokeDasharray={bilgi ? undefined : '3 4'}
+                  stroke={bilgi ? da.renk : '#4a5f8a'}
+                  strokeWidth={bilgi ? Math.min(1.4 + b.guc * 0.5, 3.6) : 1.3}
+                  strokeOpacity={solgun ? 0.07 : bilgi ? 0.5 : 0.42}
+                  strokeDasharray={bilgi ? undefined : '4 5'}
                   className={bilgi ? 'bag bag-bilgi' : 'bag'}
                 />
               )

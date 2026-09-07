@@ -66,6 +66,18 @@ export const ASAMA_RENK: Record<Asama, string> = {
   olgun: 'var(--yesil)'
 }
 
+/** Grafta sigacak kisa ad: unvan eklerini atar. */
+function kisalt(baslik: string): string {
+  const temiz = baslik
+    .replace(/\s*Uzmanı$/, '')
+    .replace(/\s*Lideri$/, '')
+    .replace(/\s*Mühendisi$/, '')
+    .replace(/\s*Tasarımcısı$/, '')
+    .replace(/\s*Araştırmacısı$/, '')
+    .trim()
+  return temiz.length > 16 ? temiz.slice(0, 15) + '…' : temiz
+}
+
 /** Metinde gecen teknik terimleri konu olarak cikarir. */
 export function konulariCikar(metin: string): string[] {
   if (!metin) return []
@@ -137,8 +149,8 @@ export function grafKur({ departmanlar, kadro, hafiza, renkAl }: Girdi): Graf {
 
   departmanlar.forEach((d, i) => {
     const aci = (i / n) * Math.PI * 2 - Math.PI / 2
-    const liderX = merkez.x + Math.cos(aci) * 210
-    const liderY = merkez.y + Math.sin(aci) * 210
+    const liderX = merkez.x + Math.cos(aci) * 196
+    const liderY = merkez.y + Math.sin(aci) * 196
     const renk = renkAl(d.id)
 
     // --- lider
@@ -148,7 +160,7 @@ export function grafKur({ departmanlar, kadro, hafiza, renkAl }: Girdi): Graf {
     dugumler.push({
       key: d.leadKey,
       ad: liderSpec?.title ?? d.leadKey,
-      kisaAd: (liderSpec?.title ?? d.leadKey).replace(' Lideri', ''),
+      kisaAd: kisalt(liderSpec?.title ?? d.leadKey),
       rol: 'lider',
       departman: d.id,
       renk,
@@ -164,15 +176,18 @@ export function grafKur({ departmanlar, kadro, hafiza, renkAl }: Girdi): Graf {
     // --- uzmanlar: liderin etrafında yelpaze
     const uzmanSayisi = d.specialistKeys.length
     d.specialistKeys.forEach((key, j) => {
-      const yayilma = 0.62
-      const alt = aci - yayilma / 2 + (uzmanSayisi === 1 ? yayilma / 2 : (j / (uzmanSayisi - 1)) * yayilma)
+      const yayilma = 0.52
+      const alt =
+        aci - yayilma / 2 + (uzmanSayisi === 1 ? yayilma / 2 : (j / (uzmanSayisi - 1)) * yayilma)
+      // Komsu etiketler cakismasin diye uzmanlar farkli yariçaplara dagilir.
+      const uzaklik = j % 2 === 1 ? 415 : 322
       const spec = kadro.find((a) => a.key === key)
       const h = hafizaAl(key)
       const boyut = h?.boyut ?? 0
       dugumler.push({
         key,
         ad: spec?.title ?? key,
-        kisaAd: (spec?.title ?? key).replace(' Uzmanı', '').replace(' Uzmanı', ''),
+        kisaAd: kisalt(spec?.title ?? key),
         rol: 'uzman',
         departman: d.id,
         renk,
@@ -180,8 +195,8 @@ export function grafKur({ departmanlar, kadro, hafiza, renkAl }: Girdi): Graf {
         asama: asamaBul(boyut),
         bilgiBoyutu: boyut,
         konular: konulariCikar(h?.metin ?? ''),
-        x: merkez.x + Math.cos(alt) * 372,
-        y: merkez.y + Math.sin(alt) * 372
+        x: merkez.x + Math.cos(alt) * uzaklik,
+        y: merkez.y + Math.sin(alt) * uzaklik
       })
       baglar.push({ a: d.leadKey, b: key, tur: 'yapi', guc: 1 })
     })
