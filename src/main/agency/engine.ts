@@ -6,7 +6,7 @@ import {
 } from '@anthropic-ai/claude-agent-sdk'
 import { randomUUID } from 'node:crypto'
 import { EGITIM_TALIMATI, egitimPrompt } from './egitim'
-import { hafizaBolumu } from './hafiza'
+import { hafizaBolumu, hafizaDizini, hafizaDosyaYolu } from './hafiza'
 import { ekipBilgisi } from './hafizaPaylasim'
 import { ogrenmeyeDeger } from './ogrenme'
 import { YAZAN_ARACLAR, izinDegerlendir } from './izin'
@@ -33,6 +33,27 @@ function olay(kind: AgencyEventKind, agentKey: string, text: string, meta?: Reco
   return { id: randomUUID(), kind, agentKey, text, at: Date.now(), meta }
 }
 
+/**
+ * Ajana kendi hafiza dosyasinin yerini soyler.
+ *
+ * Boylece gecmise donuk bakabilir ve ogrendigini kendisi guncelleyebilir;
+ * hafiza tek yonlu bir okuma degil, ajanin tuttugu canli bir defter olur.
+ */
+function hafizaDosyaNotu(ajanKey: string): string {
+  return [
+    '',
+    '--- HAFIZA DEFTERİN ---',
+    `Kalıcı hafızan şu dosyada: ${hafizaDosyaYolu(ajanKey)}`,
+    'Bu dosyayı Read ile açıp geçmişte ne öğrendiğine bakabilirsin.',
+    'Yeni ve doğruladığın bir bilgi edindiysen dosyayı Edit ile güncelle:',
+    'en üste bugünün tarihiyle "## GG.AA.YYYY" başlığı aç ve altına yaz.',
+    'Eskiyen bir bilgi gördüğünde onu düzelt; yanlış bilgiyi öylece bırakma.',
+    'Dosyayı şişirme: her madde kısa, somut ve uygulanabilir olsun.',
+    '--- DEFTER SONU ---',
+    ''
+  ].join('\n')
+}
+
 /** Egitim turunda herkes arastirabilsin, kimse yazamasin. */
 const EGITIM_ARACLARI = ['Read', 'Grep', 'Glob', 'WebSearch', 'WebFetch', 'TodoWrite']
 const EGITIM_LIDER_ARACLARI = [...EGITIM_ARACLARI, 'Agent', 'SendMessage']
@@ -49,6 +70,7 @@ function ajanTanimlari(egitim: boolean): Record<string, AgentDefinition> {
       // Egitim turunda ekip bilgisi verilmez: herkes kendi arastirmasini yapar.
       prompt:
         a.prompt +
+        hafizaDosyaNotu(a.key) +
         hafizaBolumu(a.key) +
         (egitim ? EGITIM_TALIMATI : ekipBilgisi({ ajanKey: a.key, departmanlar: departments, kadro: agents })),
       tools: egitim ? (lider ? EGITIM_LIDER_ARACLARI : EGITIM_ARACLARI) : a.tools,
@@ -160,6 +182,8 @@ export function briefCalistir(
     // 'acceptEdits' yazma araclarini canUseTool'a ugramadan onaylardi;
     // kapinin calismasi icin karar bizde kaliyor.
     permissionMode: 'default',
+    // Ajanlar kendi hafiza dosyalarini okuyup guncelleyebilsin.
+    additionalDirectories: [hafizaDizini()],
     abortController: iptal,
     env: {
       // Ajan sureci kurulu Claude oturumunu kendisi bulur; anahtar enjekte etmiyoruz.
@@ -184,7 +208,7 @@ export function briefCalistir(
       // Tam yetki: kullanici sorulmamasini secmis.
       if (secenek.tamYetki) return { behavior: 'allow' as const, updatedInput: input }
 
-      const karar = izinDegerlendir(brief.workspace, tool, input)
+      const karar = izinDegerlendir(brief.workspace, tool, input, [hafizaDizini()])
       if (karar.tur === 'izin') return { behavior: 'allow' as const, updatedInput: input }
 
       onEvent(olay('onay-gerekli', 'sistem', karar.ozet))

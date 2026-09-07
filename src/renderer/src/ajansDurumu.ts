@@ -6,6 +6,14 @@ export interface Konusma {
   at: number
 }
 
+/** Ofiste sinyal olarak gosterilen bir gorev atamasi. */
+export interface Atama {
+  id: string
+  atayan: string
+  atanan: string
+  at: number
+}
+
 export interface AjansDurumu {
   /** Goreve cagrilma sirasina gore ajanlar. */
   ajanlar: AjanKaydi[]
@@ -16,6 +24,8 @@ export interface AjansDurumu {
   bekleyenOnay: number
   /** En son konusan ajanlar, yeniden eskiye. Ofiste baloncuk gostermek icin. */
   sonKonusmalar: Konusma[]
+  /** En son gorev atamalari; ofiste faks/sinyal animasyonunu tetikler. */
+  sonAtamalar: Atama[]
   /** Ajan anahtari -> son olay zamani. Kim az once hareket etti? */
   sonHareket: Record<string, number>
 }
@@ -39,6 +49,7 @@ export function ajansDurumuHesapla(olaylar: AgencyEvent[]): AjansDurumu {
   let maliyetUsd = 0
   let bekleyenOnay = 0
   const konusmalar: Konusma[] = []
+  const atamalar: Atama[] = []
   const sonHareket: Record<string, number> = {}
 
   for (const o of olaylar) {
@@ -54,6 +65,12 @@ export function ajansDurumuHesapla(olaylar: AgencyEvent[]): AjansDurumu {
 
     switch (o.kind) {
       case 'ajan-basladi': {
+        atamalar.unshift({
+          id: o.id,
+          atayan: String(o.meta?.atayan ?? 'mudur'),
+          atanan: o.agentKey,
+          at: o.at
+        })
         // Ayni ajan birden cok kez goreve cagrilabilir; en son gorev gecerlidir.
         ajanlar.set(o.agentKey, {
           key: o.agentKey,
@@ -159,6 +176,7 @@ export function ajansDurumuHesapla(olaylar: AgencyEvent[]): AjansDurumu {
     maliyetUsd,
     bekleyenOnay,
     sonKonusmalar,
+    sonAtamalar: atamalar.slice(0, 6),
     sonHareket
   }
 }

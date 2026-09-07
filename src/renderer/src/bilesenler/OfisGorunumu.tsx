@@ -203,7 +203,8 @@ function Monitor({
   renk,
   canli,
   gecikme,
-  kimlik
+  kimlik,
+  egim = 0
 }: {
   x: number
   y: number
@@ -212,9 +213,11 @@ function Monitor({
   canli: boolean
   gecikme: number
   kimlik: string
+  /** Masanin egimi; monitor karsi rotasyonla dik tutulur. */
+  egim?: number
 }): React.JSX.Element {
   return (
-    <g transform={`translate(${x} ${y})`}>
+    <g transform={`translate(${x} ${y}) rotate(${-egim} 14 14)`}>
       <rect x="11.5" y="21" width="5" height="5" fill="#1b2740" />
       <rect x="6" y="25" width="16" height="2.2" rx="1.1" fill="#25334e" />
       <rect x="0" y="0" width="28" height="22" rx="2.5" fill="#080f1c" stroke="#2b3c5e" />
@@ -377,6 +380,50 @@ function Ajan({
   )
 }
 
+/**
+ * Masadaki faks makinesi.
+ *
+ * Gorev geldiginde kagit cikarir: mudurun gonderdigi is once liderin
+ * faksindan, sonra uzmanin faksindan cikar. Ajansin is akisini gorunur kilar.
+ */
+function Faks({
+  x,
+  y,
+  renk,
+  yeniGorev
+}: {
+  x: number
+  y: number
+  renk: string
+  /** Yeni gorev geldiginde degisen anahtar; animasyonu yeniden baslatir. */
+  yeniGorev?: string
+}): React.JSX.Element {
+  return (
+    <g transform={`translate(${x} ${y})`} className="faks">
+      {/* çıkan kâğıt: gövdenin arkasında, yukarı doğru sürünür */}
+      {yeniGorev && (
+        <g key={yeniGorev} className="faks-kagit">
+          <rect x="-7" y="-13" width="14" height="17" rx="1" fill="#e8eef8" />
+          <rect x="-4.5" y="-10" width="9" height="1.2" rx="0.6" fill="#94a3b8" />
+          <rect x="-4.5" y="-7" width="7" height="1.2" rx="0.6" fill="#94a3b8" />
+          <rect x="-4.5" y="-4" width="8" height="1.2" rx="0.6" fill="#94a3b8" />
+        </g>
+      )}
+
+      {/* gövde */}
+      <rect x="-9" y="0" width="18" height="9" rx="2" fill="#1c2740" stroke="#33456b" />
+      <rect x="-6.5" y="2" width="13" height="1.6" rx="0.8" fill="#0d1626" />
+      <circle
+        cx="6"
+        cy="6"
+        r="1.4"
+        fill={renk}
+        className={yeniGorev ? 'faks-isik canli' : 'faks-isik'}
+      />
+    </g>
+  )
+}
+
 // ---------------------------------------------------------------- masa
 
 function Klavye({
@@ -429,6 +476,7 @@ function Masa({
   renk,
   uyeler,
   calisan,
+  yeniGorev,
   onTikla
 }: {
   x: number
@@ -440,6 +488,7 @@ function Masa({
   renk: string
   uyeler: Uye[]
   calisan: number
+  yeniGorev?: string
   onTikla?: () => void
 }): React.JSX.Element {
   const G_MASA = 214
@@ -492,6 +541,7 @@ function Masa({
           renk={renk}
           canli={u.durum === 'calisiyor'}
           gecikme={i * 0.42}
+          egim={egim}
         />
       ))}
 
@@ -560,6 +610,40 @@ function Masa({
   )
 }
 
+/**
+ * Gorev sinyali: mudurden lidere, liderden uzmana giden is paketi.
+ *
+ * SMIL ile yol uzerinde hareket eder; React anahtari degistiginde animasyon
+ * bastan baslar, yani her yeni atama kendi sinyalini gonderir.
+ */
+function Sinyal({
+  x1,
+  y1,
+  x2,
+  y2,
+  renk
+}: {
+  x1: number
+  y1: number
+  x2: number
+  y2: number
+  renk: string
+}): React.JSX.Element {
+  const yol = `M ${x1} ${y1} L ${x2} ${y2}`
+  return (
+    <g className="sinyal">
+      {/* iz: sinyalin gectigi hat kisa sure parlar */}
+      <path d={yol} stroke={renk} strokeWidth="1.6" fill="none" className="sinyal-iz" />
+      <circle r="4.5" fill={renk} className="sinyal-nokta">
+        <animateMotion dur="1.5s" repeatCount="1" fill="freeze" path={yol} />
+      </circle>
+      <circle r="9" fill={renk} opacity="0.3" className="sinyal-hale">
+        <animateMotion dur="1.5s" repeatCount="1" fill="freeze" path={yol} />
+      </circle>
+    </g>
+  )
+}
+
 // ---------------------------------------------------------------- ofis
 
 export default function OfisGorunumu({
@@ -619,6 +703,56 @@ export default function OfisGorunumu({
 
   // Arkadakiler once cizilsin ki on masalar ustte kalsin.
   const sirali = [...masalar].sort((a, b) => a.y - b.y)
+
+  // Her masanın son aldığı görev: faks kâğıdını tetikler.
+  const masaGorevi = useMemo(() => {
+    const harita = new Map<string, string>()
+    for (const a of ajans.sonAtamalar) {
+      const dept = departmanlar.find(
+        (d) => d.leadKey === a.atanan || d.specialistKeys.includes(a.atanan)
+      )
+      if (dept && !harita.has(dept.id)) harita.set(dept.id, a.id)
+    }
+    return harita
+  }, [ajans.sonAtamalar, departmanlar])
+
+  /** Bir ajanın ofisteki koordinatı: sinyalin nereden nereye gideceğini bulur. */
+  const ajanKonumu = useMemo(() => {
+    const harita = new Map<string, { x: number; y: number }>()
+    harita.set('mudur', { x: MERKEZ.x, y: MERKEZ.y })
+    for (const m of masalar) {
+      const merkezX = m.x + (214 * m.olcek) / 2
+      harita.set(m.id, { x: merkezX, y: m.y + 40 * m.olcek })
+      for (const u of m.uyeler) {
+        harita.set(u.key, { x: merkezX, y: m.y + 40 * m.olcek })
+      }
+    }
+    return harita
+  }, [masalar])
+
+  const sinyaller = useMemo(
+    () =>
+      ajans.sonAtamalar
+        .slice(0, 3)
+        .map((a) => {
+          const bas = ajanKonumu.get(a.atayan) ?? ajanKonumu.get('mudur')
+          const son = ajanKonumu.get(a.atanan)
+          if (!bas || !son) return null
+          const dept = departmanlar.find(
+            (d) => d.leadKey === a.atanan || d.specialistKeys.includes(a.atanan)
+          )
+          return {
+            id: a.id,
+            x1: bas.x,
+            y1: bas.y,
+            x2: son.x,
+            y2: son.y,
+            renk: dept ? gorunumAl(dept.id).renk : 'var(--turuncu)'
+          }
+        })
+        .filter((x): x is NonNullable<typeof x> => x !== null),
+    [ajans.sonAtamalar, ajanKonumu, departmanlar]
+  )
 
   const mudurDurum = durumAl('mudur')
   const mudurSoz = sozler.get('mudur')
@@ -715,18 +849,43 @@ export default function OfisGorunumu({
           />
           <path d={`M${MERKEZ.x - 120} ${MERKEZ.y + 24} h240 v7 h-240 Z`} fill="#121b2e" />
 
-          <g transform={`translate(${MERKEZ.x - 46} ${MERKEZ.y - 44})`}>
+          {/* müdürün iki ekranı: solda akan kod, sağda departman grafiği */}
+          <g transform={`translate(${MERKEZ.x - 74} ${MERKEZ.y - 46})`}>
             <Monitor
-              kimlik="ek-mudur"
+              kimlik="ek-mudur-1"
               x={0}
               y={0}
-              dept="mudur"
+              dept="backend"
               renk="var(--turuncu)"
               canli={mudurDurum === 'calisiyor'}
               gecikme={0}
             />
           </g>
-          <Klavye x={MERKEZ.x} canli={mudurDurum === 'calisiyor'} renk="var(--turuncu)" gecikme={0} />
+          <g transform={`translate(${MERKEZ.x + 30} ${MERKEZ.y - 46})`}>
+            <Monitor
+              kimlik="ek-mudur-2"
+              x={0}
+              y={0}
+              dept="veri"
+              renk="var(--turuncu)"
+              canli={mudurDurum === 'calisiyor'}
+              gecikme={0.6}
+            />
+          </g>
+          <Klavye
+            x={MERKEZ.x - 16}
+            y={-4}
+            canli={mudurDurum === 'calisiyor'}
+            renk="var(--turuncu)"
+            gecikme={0}
+          />
+          {/* müdürün faksı: gelen brief buradan çıkar */}
+          <Faks
+            x={MERKEZ.x + 86}
+            y={MERKEZ.y - 20}
+            renk="var(--turuncu)"
+            yeniGorev={ajans.sonAtamalar[0]?.id}
+          />
 
           <g transform={`translate(${MERKEZ.x} ${MERKEZ.y + 6})`}>
             <Ajan
@@ -749,8 +908,20 @@ export default function OfisGorunumu({
 
         {/* --- ekip masaları: yarım daire --- */}
         {sirali.map((m) => (
-          <Masa key={m.id} {...m} onTikla={onDepartman ? () => onDepartman(m.id) : undefined} />
+          <Masa
+            key={m.id}
+            {...m}
+            yeniGorev={masaGorevi.get(m.id)}
+            onTikla={onDepartman ? () => onDepartman(m.id) : undefined}
+          />
         ))}
+
+        {/* görev sinyalleri: müdürden ekiplere giden iş akışı */}
+        <g className="sinyaller">
+          {sinyaller.map((s) => (
+            <Sinyal key={s.id} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} renk={s.renk} />
+          ))}
+        </g>
       </svg>
     </div>
   )

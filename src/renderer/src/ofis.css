@@ -66,10 +66,6 @@
   cursor: pointer;
 }
 
-.masa-grup.tiklanir:hover .masa-isik {
-  opacity: 0.28;
-}
-
 .masa-grup:focus-visible {
   outline: none;
 }

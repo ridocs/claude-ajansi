@@ -13,6 +13,8 @@ interface Senaryo {
   bekleniyor: 'izin' | 'onay-gerekli'
 }
 
+let kaldiEk = 0
+
 const senaryolar: Senaryo[] = [
   // --- calisma alani siniri
   {
@@ -85,8 +87,38 @@ const senaryolar: Senaryo[] = [
   { ad: 'Arama her zaman serbest', tool: 'Grep', input: { pattern: 'sifre' }, bekleniyor: 'izin' }
 ]
 
+// --- serbest klasorler (ajan hafizasi)
+const HAFIZA_KLASORU = process.platform === 'win32' ? 'C:\\veri\\hafiza' : '/veri/hafiza'
+const AYIRAC = process.platform === 'win32' ? '\\' : '/'
+
+{
+  const karar = izinDegerlendir(
+    ALAN,
+    'Write',
+    { file_path: `${HAFIZA_KLASORU}${AYIRAC}uzman-backend-api.md` },
+    [HAFIZA_KLASORU]
+  )
+  console.log(
+    `  ${karar.tur === 'izin' ? 'gecti ' : 'KALDI '} Hafiza klasorune yazma serbest`
+  )
+  if (karar.tur !== 'izin') kaldiEk++
+}
+
+{
+  const karar = izinDegerlendir(
+    ALAN,
+    'Write',
+    { file_path: `${DISARI}${AYIRAC}baska.txt` },
+    [HAFIZA_KLASORU]
+  )
+  console.log(
+    `  ${karar.tur === 'onay-gerekli' ? 'gecti ' : 'KALDI '} Serbest klasor disi hala sorulur`
+  )
+  if (karar.tur !== 'onay-gerekli') kaldiEk++
+}
+
 let gecti = 0
-let kaldi = 0
+let kaldi = kaldiEk
 
 for (const s of senaryolar) {
   const karar = izinDegerlendir(ALAN, s.tool, s.input)
@@ -100,5 +132,5 @@ for (const s of senaryolar) {
   }
 }
 
-console.log(`\n${gecti} gecti, ${kaldi} kaldi (toplam ${senaryolar.length})`)
+console.log(`\n${gecti} gecti, ${kaldi} kaldi (toplam ${senaryolar.length + 2})`)
 process.exit(kaldi === 0 ? 0 : 1)

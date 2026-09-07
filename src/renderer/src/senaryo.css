@@ -1,0 +1,124 @@
+/* Ofis senaryosu: görev sinyalleri ve faks çıktıları. */
+
+/* ================================================== görev sinyali */
+
+.sinyal-iz {
+  stroke-dasharray: 6 8;
+  opacity: 0;
+  animation: iz-parla 1.8s ease-out forwards;
+}
+
+@keyframes iz-parla {
+  0% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+  25% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+    stroke-dashoffset: -70;
+  }
+}
+
+.sinyal-nokta {
+  animation: sinyal-son 1.8s ease-out forwards;
+}
+
+.sinyal-hale {
+  animation: sinyal-hale 1.8s ease-out forwards;
+  filter: blur(3px);
+}
+
+@keyframes sinyal-son {
+  0% {
+    opacity: 0;
+    r: 2;
+  }
+  12% {
+    opacity: 1;
+    r: 4.5;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    r: 2;
+  }
+}
+
+@keyframes sinyal-hale {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.35;
+  }
+  85% {
+    opacity: 0.2;
+  }
+}
+
+/* ================================================== faks */
+
+.faks-kagit {
+  animation: kagit-cik 2.6s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+  transform-origin: center bottom;
+}
+
+@keyframes kagit-cik {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scaleY(0.1);
+  }
+  18% {
+    opacity: 1;
+  }
+  55% {
+    transform: translateY(0) scaleY(1);
+  }
+  85% {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-6px) scaleY(1);
+  }
+}
+
+.faks-isik {
+  opacity: 0.3;
+}
+
+.faks-isik.canli {
+  animation: faks-yanip-son 0.55s ease-in-out 6;
+}
+
+@keyframes faks-yanip-son {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sinyal-iz,
+  .sinyal-nokta,
+  .sinyal-hale,
+  .faks-kagit,
+  .faks-isik.canli {
+    animation: none;
+  }
+
+  .sinyal-nokta,
+  .faks-kagit {
+    opacity: 1;
+  }
+}

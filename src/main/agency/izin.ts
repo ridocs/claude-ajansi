@@ -33,7 +33,9 @@ export const YAZAN_ARACLAR = new Set(['Write', 'Edit', 'NotebookEdit', 'MultiEdi
 export function izinDegerlendir(
   workspace: string,
   tool: string,
-  input: Record<string, unknown>
+  input: Record<string, unknown>,
+  /** Calisma alani disinda ama serbest olan klasorler (or. ajan hafizasi). */
+  serbestKlasorler: string[] = []
 ): IzinKarari {
   if (tool === 'Bash') {
     const komut = String(input.command ?? '')
@@ -49,7 +51,9 @@ export function izinDegerlendir(
 
   if (YAZAN_ARACLAR.has(tool)) {
     const yol = String(input.file_path ?? input.notebook_path ?? '')
-    if (yol && !icerideMi(workspace, yol)) {
+    // Ajanin kendi hafiza klasoru calisma alani disinda ama yazmasi serbest.
+    const serbest = serbestKlasorler.some((k) => icerideMi(k, yol))
+    if (yol && !serbest && !icerideMi(workspace, yol)) {
       return {
         tur: 'onay-gerekli',
         ozet: `Çalışma alanı dışına yazma: ${yol}`,

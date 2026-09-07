@@ -26,6 +26,16 @@ const KLASOR = 'hafiza'
 /** Tek bir hafiza dosyasinin promptta kaplayacagi ust sinir. */
 const EN_FAZLA_KARAKTER = 6000
 
+/** Hafiza dosyalarinin bulundugu klasor; ajanlara bu yol acilir. */
+export function hafizaDizini(): string {
+  return dizin()
+}
+
+/** Bir ajanin hafiza dosyasinin tam yolu. */
+export function hafizaDosyaYolu(ajanKey: string): string {
+  return join(dizin(), dosyaAdi(ajanKey))
+}
+
 function dizin(): string {
   const d = join(app.getPath('userData'), KLASOR)
   if (!existsSync(d)) mkdirSync(d, { recursive: true })
