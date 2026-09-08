@@ -1,6 +1,7 @@
+import { MessageSquare } from 'lucide-react'
 import { useMemo } from 'react'
 import type { Department, DepartmentId } from '../../../shared/types'
-import type { AjansDurumu } from '../ajansDurumu'
+import type { AjansDurumu, Konusma } from '../ajansDurumu'
 import { ajanAdi } from '../ajansDurumu'
 import { gorunumAl } from '../departmanMeta'
 
@@ -32,8 +33,8 @@ function kavisY(t: number): number {
 /**
  * Masadaki i. uyenin masa-yerel konumu.
  *
- * Hem masayi cizen bilesen hem de ustteki baloncuk katmani ayni hesabi
- * kullanir; boylece baloncuk her zaman ajanin tam tepesine oturur.
+ * Masayi cizen bilesen ile ajanlari yerlestiren kod ayni hesabi kullanir;
+ * monitor, klavye ve ajan hep ayni kavis uzerinde durur.
  */
 function uyeYeri(i: number, adet: number): { t: number; x: number; y: number } {
   const t = (i + 0.5) / adet
@@ -269,141 +270,71 @@ function Monitor({
 
 // ---------------------------------------------------------------- ajan
 
-/** En fazla iki satira sigacak sekilde kelime kelime sarar. */
-function satirlaraBol(metin: string, satirBasinaHarf: number): string[] {
-  const kelimeler = metin.replace(/\s+/g, ' ').trim().split(' ')
-  const satirlar: string[] = []
-  let simdiki = ''
+// ---------------------------------------------------------------- mesaj akışı
 
-  for (const k of kelimeler) {
-    if (!simdiki) {
-      simdiki = k
-    } else if (simdiki.length + 1 + k.length <= satirBasinaHarf) {
-      simdiki += ' ' + k
-    } else {
-      satirlar.push(simdiki)
-      simdiki = k
-      if (satirlar.length === 2) break
-    }
-  }
-  if (satirlar.length < 2 && simdiki) satirlar.push(simdiki)
-
-  // Ikinci satir tasiyorsa uc nokta ile bitir.
-  if (satirlar.length === 2 && satirlar[1].length > satirBasinaHarf) {
-    satirlar[1] = satirlar[1].slice(0, satirBasinaHarf - 1) + '…'
-  }
-  return satirlar.slice(0, 2)
+/** Saat:dakika biciminde kisa zaman. */
+function saat(at: number): string {
+  const d = new Date(at)
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
 /**
- * Konusma baloncugu.
+ * Bir ajanin hangi departmana ait oldugunu anahtarindan cikarir.
  *
- * Masa katmaninin disinda, ofis olceginde cizilir: hangi sirada olursa olsun
- * ayni boyutta ve her zaman duz durur.
+ * Anahtarlar "lider-backend" ve "uzman-backend-api" bicimli; ikisinde de
+ * ikinci parca departman kimligi.
  */
-function Baloncuk({
-  x,
-  y,
-  metin,
-  renk,
-  yon = 'alt'
-}: {
-  x: number
-  y: number
-  metin: string
-  renk: string
-  /** Baloncuk ajanin altinda mi ustunde mi duruyor. */
-  yon?: 'ust' | 'alt'
-}): React.JSX.Element {
-  const HARF = 30
-  const satirlar = satirlaraBol(metin, HARF)
-  const enUzun = Math.max(...satirlar.map((s) => s.length), 8)
-  // 10px Inter'da ortalama harf genisligi ~5.1px.
-  const g = Math.round(Math.min(enUzun * 5.1 + 18, HARF * 5.1 + 18))
-  const h = satirlar.length > 1 ? 32 : 21
-  const ustY = yon === 'alt' ? y + 8 : y - h - 8
+function departmanKimligi(ajanKey: string): DepartmentId | 'mudur' {
+  if (ajanKey === 'mudur') return 'mudur'
+  return (ajanKey.split('-')[1] ?? '') as DepartmentId
+}
 
+/**
+ * Ofisin sag tarafindaki mesaj akisi.
+ *
+ * Konusma baloncuklarinin yerini aldi: baloncuk ayni anda yalnizca uc sozu
+ * gosterebiliyordu, arkasi kayboluyordu ve masalarin ustunu ortuyordu.
+ * Burada butun akis sirasiyla duruyor ve geriye donup okunabiliyor.
+ */
+function MesajAkisi({ konusmalar }: { konusmalar: Konusma[] }): React.JSX.Element {
   return (
-    <g className="baloncuk" transform={`translate(${x - g / 2} ${ustY})`}>
-      <rect
-        width={g}
-        height={h}
-        rx="7"
-        fill="rgba(8,13,24,.96)"
-        stroke={renk}
-        strokeOpacity="0.6"
-        strokeWidth="1"
-      />
-      {/* kuyruk her zaman ajana bakar */}
-      <path
-        d={
-          yon === 'alt'
-            ? `M${g / 2 - 4.5} 0.5 l4.5 -6 l4.5 6 Z`
-            : `M${g / 2 - 4.5} ${h - 0.5} l4.5 6 l4.5 -6 Z`
-        }
-        fill="rgba(8,13,24,.96)"
-        stroke={renk}
-        strokeOpacity="0.6"
-        strokeWidth="1"
-      />
-      {satirlar.map((s, i) => (
-        <text
-          key={i}
-          x={g / 2}
-          y={(satirlar.length > 1 ? 14 : 14.5) + i * 12}
-          className="baloncuk-yazi"
-          fill="var(--metin-2)"
-        >
-          {s}
-        </text>
-      ))}
-    </g>
+    <aside className="ofis-mesajlar" aria-label="Ajans mesajları">
+      <header className="ofis-mesaj-tepe">
+        <MessageSquare size={13} />
+        <b>Mesajlar</b>
+        {konusmalar.length > 0 && <span className="ofis-mesaj-sayi">{konusmalar.length}</span>}
+      </header>
+
+      {konusmalar.length === 0 ? (
+        <p className="ofis-mesaj-bos">
+          Ajanlar konuşmaya başlayınca söyledikleri buraya düşer: kim ne düşünüyor,
+          neyi neden yaptı, sırasıyla.
+        </p>
+      ) : (
+        <ol className="ofis-mesaj-liste">
+          {konusmalar.map((k, i) => {
+            const dept = departmanKimligi(k.key)
+            const renk = dept === 'mudur' ? 'var(--turuncu)' : gorunumAl(dept).renk
+            return (
+              <li key={`${k.key}-${k.at}-${i}`} className="ofis-mesaj">
+                <span className="ofis-mesaj-cizgi" style={{ background: renk }} />
+                <div className="ofis-mesaj-govde">
+                  <div className="ofis-mesaj-ust">
+                    <b style={{ color: renk }}>{ajanAdi(k.key)}</b>
+                    <time>{saat(k.at)}</time>
+                  </div>
+                  <p>{k.metin}</p>
+                </div>
+              </li>
+            )
+          })}
+        </ol>
+      )}
+    </aside>
   )
 }
 
-function YaziyorBaloncuk({
-  x,
-  y,
-  renk
-}: {
-  x: number
-  y: number
-  renk: string
-}): React.JSX.Element {
-  const g = 34
-  const h = 17
-  return (
-    <g className="baloncuk" transform={`translate(${x - g / 2} ${y + 8})`}>
-      <rect
-        width={g}
-        height={h}
-        rx="4"
-        fill="rgba(9,15,27,.95)"
-        stroke={renk}
-        strokeOpacity="0.5"
-        strokeWidth="0.7"
-      />
-      <path
-        d={`M${g / 2 - 4} 0.5 l4 -5.5 l4 5.5 Z`}
-        fill="rgba(9,15,27,.95)"
-        stroke={renk}
-        strokeOpacity="0.5"
-        strokeWidth="0.7"
-      />
-      {[0, 1, 2].map((i) => (
-        <circle
-          key={i}
-          className="yaziyor-nokta"
-          cx={10 + i * 7}
-          cy={h / 2}
-          r="2"
-          fill={renk}
-          style={{ animationDelay: `${i * 0.18}s` }}
-        />
-      ))}
-    </g>
-  )
-}
+// ---------------------------------------------------------------- ajan
 
 function Ajan({
   renk,
@@ -541,7 +472,6 @@ function Klavye({
 interface Uye {
   key: string
   durum: AjanDurum
-  soz?: string
 }
 
 function Masa({
@@ -729,13 +659,6 @@ export default function OfisGorunumu({
     return hazir ? 'hazir' : 'kapali'
   }
 
-  // En son konusan üç ajan baloncuk gosterir.
-  const sozler = useMemo(() => {
-    const m = new Map<string, string>()
-    for (const k of ajans.sonKonusmalar.slice(0, 3)) m.set(k.key, k.metin)
-    return m
-  }, [ajans.sonKonusmalar])
-
   const masalar = useMemo(() => {
     // Amfi duzeni: mudur solda, ekipler onun karsisinda iki sirada.
     // Kenardaki masalar hafifce asagi kayar; satirlar yay gibi bukulur.
@@ -751,8 +674,7 @@ export default function OfisGorunumu({
       const merkezdenUzaklik = Math.abs(sutun - 1.5)
       const uyeler: Uye[] = [d.leadKey, ...d.specialistKeys].map((k) => ({
         key: k,
-        durum: durumAl(k),
-        soz: sozler.has(k) ? sozler.get(k) : undefined
+        durum: durumAl(k)
       }))
       return {
         id: d.id,
@@ -766,7 +688,7 @@ export default function OfisGorunumu({
         calisan: uyeler.filter((u) => u.durum === 'calisiyor').length
       }
     })
-  }, [departmanlar, ajans, hazir, sozler])
+  }, [departmanlar, ajans, hazir])
 
   // Arkadakiler once cizilsin ki on masalar ustte kalsin.
   const sirali = [...masalar].sort((a, b) => a.y - b.y)
@@ -782,53 +704,6 @@ export default function OfisGorunumu({
     }
     return harita
   }, [ajans.sonAtamalar, departmanlar])
-
-  /**
-   * Konusan ajanlarin baloncuklari, ofis olceginde mutlak konumla.
-   *
-   * Masa katmanina girmiyorlar: arka siradaki masa 0.74 olcekli olsa bile
-   * baloncuk ayni boyutta ve duz kaliyor, komsu masa da ustunu ortmuyor.
-   */
-  const baloncuklar = useMemo(() => {
-    const liste: {
-      key: string
-      x: number
-      y: number
-      metin: string
-      renk: string
-      yon: 'ust' | 'alt'
-    }[] = []
-
-    // Mudurun baloncugu ekranlarinin ustunde: alt taraf unvan yazisiyla dolu.
-    if (sozler.has('mudur')) {
-      liste.push({
-        key: 'mudur',
-        x: MERKEZ.x,
-        y: MERKEZ.y - 54,
-        metin: sozler.get('mudur') ?? '',
-        renk: 'var(--turuncu)',
-        yon: 'ust'
-      })
-    }
-
-    for (const m of masalar) {
-      m.uyeler.forEach((u, i) => {
-        if (!sozler.has(u.key)) return
-        const yer = uyeYeri(i, m.uyeler.length)
-        liste.push({
-          key: u.key,
-          x: m.x + yer.x * m.olcek,
-          // Ajan masa-yerel y + 60'ta oturuyor; baloncuk onundeki bos zemine
-          // duser, boylece monitorleri ve masa basligini ortmez.
-          y: m.y + (yer.y + 60 + 26) * m.olcek,
-          metin: sozler.get(u.key) ?? '',
-          renk: m.renk,
-          yon: 'alt'
-        })
-      })
-    }
-    return liste
-  }, [masalar, sozler])
 
   /** Bir ajanın ofisteki koordinatı: sinyalin nereden nereye gideceğini bulur. */
   const ajanKonumu = useMemo(() => {
@@ -869,12 +744,12 @@ export default function OfisGorunumu({
   )
 
   const mudurDurum = durumAl('mudur')
-  const mudurSoz = sozler.get('mudur')
   const calisanSayi = ajans.ajanlar.filter((a) => a.durum === 'calisiyor').length
 
   return (
-    <div className="ofis-sahne">
-      <svg viewBox={`0 0 ${G} ${Y}`} className="ofis-svg" role="img" aria-label="Ajans ofisi">
+    <div className="ofis-alan">
+      <div className="ofis-sahne">
+        <svg viewBox={`0 0 ${G} ${Y}`} className="ofis-svg" role="img" aria-label="Ajans ofisi">
         <defs>
           <linearGradient id="gk" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#0e1c33" />
@@ -1037,17 +912,10 @@ export default function OfisGorunumu({
           ))}
         </g>
 
-        {/* Baloncuklar en üstte: masaların ölçeğine tabi değil, hep aynı boyut. */}
-        <g className="baloncuk-katmani">
-          {baloncuklar.map((b) =>
-            b.metin ? (
-              <Baloncuk key={b.key} x={b.x} y={b.y} metin={b.metin} renk={b.renk} yon={b.yon} />
-            ) : (
-              <YaziyorBaloncuk key={b.key} x={b.x} y={b.y} renk={b.renk} />
-            )
-          )}
-        </g>
-      </svg>
+        </svg>
+      </div>
+
+      <MesajAkisi konusmalar={ajans.tumKonusmalar} />
     </div>
   )
 }

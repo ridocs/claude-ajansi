@@ -187,6 +187,39 @@ function bekle(ad: string, ok: boolean, detay = ''): void {
   )
 }
 
+// --- Mesaj paneli: butun konusmalar sirasiyla tutulur
+{
+  const d = ajansDurumuHesapla([
+    o('ajan-konustu', 'mudur', 'Plani cikardim.'),
+    o('ajan-basladi', 'lider-backend', 'API kur', { atayan: 'mudur' }),
+    o('ajan-konustu', 'lider-backend', 'Ekibe dagittim.'),
+    o('ajan-konustu', 'lider-backend', 'Ilk rapor geldi.'),
+    o('ajan-konustu', 'uzman-backend-api', 'Uc nokta hazir.')
+  ])
+
+  bekle(
+    'Butun konusmalar tutuluyor',
+    d.tumKonusmalar.length === 5,
+    String(d.tumKonusmalar.length)
+  )
+  bekle(
+    'Akis yeniden eskiye siralanir',
+    d.tumKonusmalar[0].metin === 'Uc nokta hazir.',
+    d.tumKonusmalar[0]?.metin
+  )
+  bekle(
+    'Ayni ajanin birden cok sozu akista kalir',
+    d.tumKonusmalar.filter((k) => k.key === 'lider-backend').length === 3,
+    String(d.tumKonusmalar.filter((k) => k.key === 'lider-backend').length)
+  )
+  bekle(
+    'Gorev metni de akisa dusuyor',
+    d.tumKonusmalar.some((k) => k.metin === 'API kur'),
+    d.tumKonusmalar.map((k) => k.metin).join(' | ')
+  )
+  bekle('Konusmasiz akis bos doner', ajansDurumuHesapla([]).tumKonusmalar.length === 0)
+}
+
 let gecti = 0
 for (const r of sonuclar) {
   if (r.ok) {

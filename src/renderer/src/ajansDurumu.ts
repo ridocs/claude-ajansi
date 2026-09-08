@@ -22,8 +22,12 @@ export interface AjansDurumu {
   /** Calisma bitene kadar 0; sonda gercek degerle dolar. */
   maliyetUsd: number
   bekleyenOnay: number
-  /** En son konusan ajanlar, yeniden eskiye. Ofiste baloncuk gostermek icin. */
-  sonKonusmalar: Konusma[]
+  /**
+   * Butun konusmalar, yeniden eskiye.
+   *
+   * Ofisin sagindaki mesaj paneli bunu gosterir: kim ne dedi, sirasiyla.
+   */
+  tumKonusmalar: Konusma[]
   /** En son gorev atamalari; ofiste faks/sinyal animasyonunu tetikler. */
   sonAtamalar: Atama[]
   /** Ajan anahtari -> son olay zamani. Kim az once hareket etti? */
@@ -56,7 +60,7 @@ export function ajansDurumuHesapla(olaylar: AgencyEvent[]): AjansDurumu {
     // Sistem olaylari bir ajana ait degil; onlari hareket sayilmiyoruz.
     if (o.agentKey !== 'sistem') sonHareket[o.agentKey] = o.at
 
-    // Ofiste baloncuk olarak gosterilecek konusmalar.
+    // Mesaj panelinde gosterilecek konusmalar.
     if (o.kind === 'ajan-konustu' && o.text.trim()) {
       konusmalar.unshift({ key: o.agentKey, metin: o.text.trim(), at: o.at })
     } else if (o.kind === 'ajan-basladi' && o.text.trim()) {
@@ -161,21 +165,14 @@ export function ajansDurumuHesapla(olaylar: AgencyEvent[]): AjansDurumu {
     }
   }
 
-  // Ayni ajanin birden cok sozu varsa en yenisi kalir.
-  const gorulen = new Set<string>()
-  const sonKonusmalar = konusmalar.filter((k) => {
-    if (gorulen.has(k.key)) return false
-    gorulen.add(k.key)
-    return true
-  })
-
   return {
     ajanlar: [...ajanlar.values()].sort((a, b) => a.basladi - b.basladi),
     teslimatlar: [...teslimatlar.values()].sort((a, b) => b.at - a.at),
     toplamToken,
     maliyetUsd,
     bekleyenOnay,
-    sonKonusmalar,
+    // Panel uzun akisi gosterir ama sinirsiz buyumesin.
+    tumKonusmalar: konusmalar.slice(0, 200),
     sonAtamalar: atamalar.slice(0, 6),
     sonHareket
   }

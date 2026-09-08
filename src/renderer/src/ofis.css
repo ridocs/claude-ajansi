@@ -1,12 +1,140 @@
 /* Canlı ofis: müdür solda, ekipler karşısında yarım daire.
    Bütün animasyonlar sonsuz döngüdür ve birbirinden bağımsız çalışır. */
 
+/*
+ * Ofis alani: solda sahne, sagda mesaj akisi.
+ *
+ * Baloncuklar ayni anda yalnizca uc sozu gosterebiliyordu ve arkasi
+ * kayboluyordu; akis sagda sirasiyla duruyor, geriye donup okunabiliyor.
+ */
+.ofis-alan {
+  display: grid;
+  grid-template-columns: 1fr 268px;
+  gap: 12px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+@media (max-width: 1180px) {
+  .ofis-alan {
+    grid-template-columns: 1fr;
+  }
+}
+
 .ofis-sahne {
   border: 1px solid var(--cizgi);
   border-radius: var(--r);
   overflow: hidden;
   background: #070c16;
   line-height: 0;
+  min-width: 0;
+}
+
+/* ================================================== mesaj akışı */
+
+.ofis-mesajlar {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--cizgi);
+  border-radius: var(--r);
+  background: var(--panel);
+  overflow: hidden;
+  min-height: 0;
+}
+
+.ofis-mesaj-tepe {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 13px;
+  border-bottom: 1px solid var(--cizgi);
+  color: var(--metin-2);
+  font-size: 12px;
+}
+
+.ofis-mesaj-tepe b {
+  color: var(--metin);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.ofis-mesaj-sayi {
+  margin-left: auto;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--metin-3);
+  border: 1px solid var(--cizgi);
+  border-radius: 9px;
+  padding: 1px 7px;
+}
+
+.ofis-mesaj-bos {
+  padding: 16px 14px;
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--metin-3);
+}
+
+.ofis-mesaj-liste {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  overflow-y: auto;
+  /* Sahne yuksekligini asmasin; uzun akis kendi icinde kaysin. */
+  flex: 1;
+  min-height: 0;
+  max-height: 560px;
+}
+
+.ofis-mesaj {
+  display: flex;
+  gap: 8px;
+  /* Blok kendi boyunu korusun: flex kabinda kuculup metni kesmesin. */
+  flex-shrink: 0;
+}
+
+.ofis-mesaj-cizgi {
+  width: 2px;
+  border-radius: 1px;
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.ofis-mesaj-govde {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ofis-mesaj-ust {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.ofis-mesaj-ust b {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.ofis-mesaj-ust time {
+  font-family: var(--f-mono);
+  font-size: 9.5px;
+  color: var(--metin-3);
+}
+
+.ofis-mesaj-govde p {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--metin-2);
+  overflow-wrap: anywhere;
 }
 
 .ofis-svg {
@@ -50,19 +178,6 @@
   font-family: var(--f);
   font-size: 10.5px;
   text-anchor: middle;
-}
-
-.baloncuk-yazi {
-  font-family: var(--f);
-  font-size: 10px;
-  font-weight: 500;
-  text-anchor: middle;
-  letter-spacing: 0.005em;
-}
-
-/* Baloncuklar en ust katman: hicbir masa ustlerini ortmez. */
-.baloncuk-katmani {
-  pointer-events: none;
 }
 
 /* ================================================== masa */
@@ -213,38 +328,6 @@
   }
 }
 
-/* ================================================== konuşma baloncuğu */
-
-.baloncuk {
-  animation: baloncuk-gir 0.45s ease-out both;
-}
-
-@keyframes baloncuk-gir {
-  from {
-    opacity: 0;
-    transform: translateY(6px) scale(0.9);
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.yaziyor-nokta {
-  animation: yaziyor 1.15s ease-in-out infinite;
-}
-
-@keyframes yaziyor {
-  0%,
-  70%,
-  100% {
-    opacity: 0.3;
-    transform: translateY(0);
-  }
-  35% {
-    opacity: 1;
-    transform: translateY(-1.6px);
-  }
-}
 
 /* ================================================== klavye */
 
@@ -440,8 +523,6 @@
   .kol,
   .isik,
   .goz,
-  .baloncuk,
-  .yaziyor-nokta,
   .klavye.canli .tus,
   .ekran-yuzey.canli,
   .ic-kod.canli,
