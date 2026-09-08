@@ -190,10 +190,17 @@
 
 .hafiza-duzen {
   display: grid;
-  grid-template-columns: minmax(240px, 300px) 1fr;
+  grid-template-columns: minmax(260px, 320px) 1fr;
   gap: 16px;
   min-height: 0;
-  align-items: start;
+  /* Iki sutun da ayni yuksekligi paylassin: "start" ile detay karti
+     iceriginin boyunda kaliyor ve sayfanin alti bos kaliyordu. */
+  align-items: stretch;
+  /* .hafiza-sayfa zaten height:100% flex sutun; kalan alani doldur.
+     vh hesabi ust/alt cubuk ve baslik yuksekligini tahmin etmek zorunda
+     kaliyordu ve sayfanin altinda bosluk birakiyordu. */
+  flex: 1;
+  min-height: 420px;
 }
 
 @media (max-width: 900px) {
@@ -205,8 +212,7 @@
 .hafiza-liste {
   display: grid;
   grid-template-rows: auto 1fr;
-  max-height: calc(100vh - var(--ust-yukseklik) - var(--alt-yukseklik) - 130px);
-  min-height: 300px;
+  min-height: 0;
 }
 
 .hafiza-arama {
@@ -305,7 +311,7 @@
 .hafiza-detay {
   display: flex;
   flex-direction: column;
-  min-height: 300px;
+  min-height: 0;
 }
 
 .hafiza-eylem {

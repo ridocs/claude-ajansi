@@ -6,14 +6,20 @@ import { StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import OfisGorunumu from './bilesenler/OfisGorunumu'
 import Projeler from './sayfalar/Projeler'
+import HafizaSayfasi from './sayfalar/Hafiza'
+import { HAFIZA_FIKSTUR } from './hafizaFikstur'
+import kadroFikstur from './kadroFikstur.json'
 import { ajansDurumuHesapla } from './ajansDurumu'
-import type { AgencyEvent, Department, DepartmentId } from '../../shared/types'
+import type { AgencyEvent, AgentSpec, Department, DepartmentId } from '../../shared/types'
 import './styles.css'
 import './sayfalar.css'
 import './ofis.css'
 import './senaryo.css'
 import './sayfalar2.css'
 import './ek.css'
+import './toplanti.css'
+import './beyin.css'
+import './hafizaGorunum.css'
 
 // Sabit fikstur: gorsel testin kadro degisikliklerinden etkilenmemesi icin
 // buradaki liste elle tutuluyor, main tarafina bagli degil.
@@ -167,13 +173,35 @@ function Onizleme(): React.JSX.Element {
   )
 }
 
+// Gercek kadro ve gercek hafiza dosyalari: liste tasmasini gercek ajan
+// adlari, gercek boyutlar ve gercek metinlerle test etmek icin.
+const KADRO = kadroFikstur.agents as unknown as AgentSpec[]
+const HAFIZA_DEPARTMANLARI = kadroFikstur.departments as unknown as Department[]
+
 // Projeler sayfasi ayarlari main tarafindan okur; onizlemede sahtesi verilir.
 ;(window as unknown as { ajans: unknown }).ajans = {
-  ayarlar: async () => ({ klasorGecmisi: ['C:\projeler\tanitim-sitesi'] })
+  ayarlar: async () => ({ klasorGecmisi: ['C:\projeler\tanitim-sitesi'] }),
+  kadro: async () => ({ agents: KADRO, departments: HAFIZA_DEPARTMANLARI }),
+  hafiza: async () => HAFIZA_FIKSTUR,
+  hafizaYaz: async () => HAFIZA_FIKSTUR,
+  hafizaSil: async () => HAFIZA_FIKSTUR
 }
 
 function Sayfa(): React.JSX.Element {
   const hangi = new URLSearchParams(window.location.search).get('sayfa')
+  if (hangi === 'hafiza') {
+    return (
+      <main className="icerik">
+        <HafizaSayfasi
+          departmanlar={HAFIZA_DEPARTMANLARI}
+          klasor="C:\projeler\tanitim-sitesi"
+          calisiyor={false}
+          hazir={true}
+          onEgit={async () => {}}
+        />
+      </main>
+    )
+  }
   if (hangi === 'projeler') {
     return (
       <div className="kabuk-govde" style={{ padding: 20 }}>

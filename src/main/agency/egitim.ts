@@ -17,16 +17,22 @@ export function egitimPrompt(departments: Department[]): string {
     'Emrindeki departmanlar:',
     liste,
     '',
-    'Bu turun tek amacı: her uzman kendi alanındaki güncel bilgiyi araştırıp kalıcı',
-    'hafızasına yazacak. Kod yazılmayacak, hiçbir dosya oluşturulmayacak veya',
-    'değiştirilmeyecek.',
+    'Bu turun amacı: hem uzmanlar hem liderler kendi alanlarındaki güncel bilgiyi',
+    'araştırıp kalıcı hafıza defterlerine yazacak. Lider yalnızca dağıtan kişi değil;',
+    'ekibinin öğrendiği her şeyi bilen kişi olacak. Proje dosyalarına dokunulmayacak:',
+    'kod yazılmayacak, hiçbir dosya oluşturulmayacak veya değiştirilmeyecek. Tek',
+    'yazılabilir yer herkesin kendi hafıza defteri.',
     '',
     'Nasıl çalışırsın:',
     '1. Her departman liderine Agent aracıyla bir eğitim görevi ver ve sonucunu BEKLE.',
     '   Görev metnine şunu açıkça yaz: "Uzmanlarının her birini görevlendir, HER',
-    '   BİRİNİN SONUCUNU BEKLE ve ancak hepsi bitince bana dön. Uzmanların güncel',
-    '   araçları, sürümleri ve iyi uygulamaları WebSearch ile araştırsın; hiçbir dosya',
-    '   oluşturmasın veya değiştirmesin."',
+    '   BİRİNİN SONUCUNU BEKLE. Uzmanların güncel araçları, sürümleri ve iyi',
+    '   uygulamaları WebSearch ile araştırsın ve öğrendiğini kendi defterine yazsın.',
+    '   Sonra SEN de kendi defterini yaz: üç uzmanının defterini oku, hepsini bilen',
+    '   tek kişi ol. Kendi defterine (a) üç uzmandan gelenlerin birleşik özetini,',
+    '   (b) departmanı ilgilendiren ama tek bir uzmana düşmeyen konuları — mimari',
+    '   kararlar, uzmanlık alanları arasındaki bağlantılar, ekip içi iş bölümü —',
+    '   kendi araştırmanla ekle. Defterini yazmadan bana dönme."',
     '2. Bir liderden "uzmanlar hâlâ çalışıyor" ya da "tamamlanınca döneceğim" gibi',
     '   yarım bir cevap gelirse bunu kabul etme: o lideri tekrar görevlendirip',
     '   uzmanlarının çıktılarını toplamasını iste. Turu ancak her departman gerçek',
@@ -76,11 +82,42 @@ export const EGITIM_TALIMATI = [
   '--- EĞİTİM TALİMATI SONU ---'
 ].join('\n')
 
+/**
+ * Liderlere ek talimat: dagitip beklemek yetmez, kendileri de ogrenir.
+ *
+ * Lider ekibinin bildigi her seyi bilen kisi olmali; yoksa gorev dagitirken
+ * uzmanlarinin birikimini kullanamiyor ve defteri bos kaliyor.
+ */
+export const EGITIM_LIDER_TALIMATI = [
+  '',
+  '--- LİDER OLARAK EK SORUMLULUĞUN ---',
+  'Sen yalnızca dağıtan kişi değilsin. Bu turun sonunda departmanının bildiği',
+  'her şeyi bilen kişi sen olacaksın.',
+  '',
+  'Sıra şu:',
+  '1. Üç uzmanını da görevlendir ve ÜÇÜNÜN DE sonucunu bekle.',
+  '2. Üçünün defterini de Read ile aç ve oku. Ne öğrendiklerini bil.',
+  '3. Kendi defterini yaz. İçinde şunlar olsun:',
+  '   - Üç uzmandan gelenlerin birleşik özeti: departmanın bugünkü teknoloji',
+  '     tablosu tek yerde. Uzmanların defterini kopyalama, damıt.',
+  '   - Uzmanlar arasındaki bağlantılar ve çelişkiler: biri "şunu kullan" derken',
+  '     öteki "kaçın" diyorsa bunu not et, kimin haklı olduğunu araştır.',
+  '   - Tek bir uzmana düşmeyen, departmanı bütün olarak ilgilendiren konular:',
+  '     mimari kararlar, araç seçimi, ekip içinde işin nasıl bölüneceği. Bunları',
+  '     kendi WebSearch araştırmanla doldur.',
+  '4. Defterini yazmadan işi bitirme.',
+  '--- LİDER TALİMATI SONU ---'
+].join('\n')
+
 /** Egitim turunda mudure verilen ilk mesaj. */
 export const EGITIM_BRIEFI = [
   'Ajansı eğit. Bütün departmanları göreve çağır; her uzman kendi alanındaki',
   'güncel araçları, sürümleri ve iyi uygulamaları araştırsın ve öğrendiklerini',
-  'istenen biçimde özetlesin.',
+  'kendi hafıza defterine yazsın.',
   '',
-  'Hiçbir dosya oluşturulmayacak veya değiştirilmeyecek. Bu tur yalnızca öğrenme turudur.'
+  'Liderler de öğrenecek: her lider üç uzmanının defterini okuyup birleşik bir',
+  'departman özeti çıkaracak ve tek bir uzmana düşmeyen konuları kendi araştırıp',
+  'kendi defterine yazacak. Turun sonunda 33 ajanın 33 defteri de dolu olmalı.',
+  '',
+  'Proje dosyalarına dokunulmayacak. Bu tur yalnızca öğrenme turudur.'
 ].join('\n')

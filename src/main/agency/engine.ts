@@ -5,7 +5,7 @@ import {
   type SDKUserMessage
 } from '@anthropic-ai/claude-agent-sdk'
 import { randomUUID } from 'node:crypto'
-import { EGITIM_TALIMATI, egitimPrompt } from './egitim'
+import { EGITIM_LIDER_TALIMATI, EGITIM_TALIMATI, egitimPrompt } from './egitim'
 import { DENETIM_TALIMATI, denetimPrompt } from './denetim'
 import { hafizaBolumu, hafizaDizini, hafizaDosyaYolu } from './hafiza'
 import { ekipBilgisi } from './hafizaPaylasim'
@@ -91,7 +91,7 @@ function ajanTanimlari(kip: CalismaKip): Record<string, AgentDefinition> {
     // tespit turunda okur, onarim turunda yalnizca listedeki maddeyi kapatir.
     const ekEk =
       kip === 'egitim'
-        ? EGITIM_TALIMATI
+        ? EGITIM_TALIMATI + (lider ? EGITIM_LIDER_TALIMATI : '')
         : ekipBilgisi({ ajanKey: a.key, departmanlar: departments, kadro: agents }) +
           (kip === 'denetim' ? DENETIM_TALIMATI : '')
     tanimlar[a.key] = {

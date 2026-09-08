@@ -152,7 +152,7 @@ export default function Hafiza({
   }
 
   return (
-    <div className={gorunum === 'ag' ? 'hafiza-sayfa hafiza-sabit' : 'hafiza-sayfa'}>
+    <div className="hafiza-sayfa hafiza-sabit">
       <div className="karsilama">
         <div>
           <h1>Hafıza</h1>

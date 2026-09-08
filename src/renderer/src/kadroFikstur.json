@@ -1,0 +1,446 @@
+{
+ "departments": [
+  {
+   "id": "sistem",
+   "title": "Sistem & Altyapı",
+   "scope": "Kurulum, çalışma ortamı, bağımlılıklar, derleme ve dağıtım hattı, loglama ve izleme.",
+   "leadKey": "lider-sistem",
+   "specialistKeys": [
+    "uzman-sistem-ortam",
+    "uzman-sistem-cicd",
+    "uzman-sistem-izleme"
+   ]
+  },
+  {
+   "id": "backend",
+   "title": "Backend",
+   "scope": "Sunucu tarafı mantık, API tasarımı, veritabanı şeması ve sorguları, dış servis entegrasyonları.",
+   "leadKey": "lider-backend",
+   "specialistKeys": [
+    "uzman-backend-api",
+    "uzman-backend-veritabani",
+    "uzman-backend-entegrasyon"
+   ]
+  },
+  {
+   "id": "frontend",
+   "title": "Frontend",
+   "scope": "Kullanıcı arayüzü geliştirme, bileşen yapısı, durum yönetimi, istemci performansı, erişilebilirlik.",
+   "leadKey": "lider-frontend",
+   "specialistKeys": [
+    "uzman-frontend-arayuz",
+    "uzman-frontend-performans",
+    "uzman-frontend-erisilebilirlik"
+   ]
+  },
+  {
+   "id": "kalite",
+   "title": "Kalite & Test",
+   "scope": "Test yazımı ve koşumu, kapsam analizi, uçtan uca senaryolar, regresyon ve yük testi.",
+   "leadKey": "lider-kalite",
+   "specialistKeys": [
+    "uzman-kalite-birim",
+    "uzman-kalite-uctan-uca",
+    "uzman-kalite-regresyon"
+   ]
+  },
+  {
+   "id": "veri",
+   "title": "Veri & Analitik",
+   "scope": "Veri toplama ve temizleme, istatistiksel analiz, raporlama ve görselleştirme.",
+   "leadKey": "lider-veri",
+   "specialistKeys": [
+    "uzman-veri-muhendis",
+    "uzman-veri-analist",
+    "uzman-veri-gorsellestirme"
+   ]
+  },
+  {
+   "id": "seo",
+   "title": "SEO & İçerik",
+   "scope": "Teknik SEO denetimi, içerik ve anahtar kelime stratejisi, otorite ve rakip analizi.",
+   "leadKey": "lider-seo",
+   "specialistKeys": [
+    "uzman-seo-teknik",
+    "uzman-seo-icerik",
+    "uzman-seo-otorite"
+   ]
+  },
+  {
+   "id": "tasarim",
+   "title": "Tasarım & UX",
+   "scope": "Arayüz tasarımı, kullanıcı akışları, tasarım sistemi ve görsel tutarlılık.",
+   "leadKey": "lider-tasarim",
+   "specialistKeys": [
+    "uzman-tasarim-arayuz-tasarim",
+    "uzman-tasarim-ux",
+    "uzman-tasarim-tasarim-sistemi"
+   ]
+  },
+  {
+   "id": "guvenlik",
+   "title": "Güvenlik",
+   "scope": "Kod ve bağımlılık güvenliği, yetkilendirme ve sır yönetimi, gizlilik ve mevzuat uyumu.",
+   "leadKey": "lider-guvenlik",
+   "specialistKeys": [
+    "uzman-guvenlik-kod",
+    "uzman-guvenlik-altyapi",
+    "uzman-guvenlik-gizlilik"
+   ]
+  }
+ ],
+ "agents": [
+  {
+   "key": "lider-sistem",
+   "role": "lider",
+   "department": "sistem",
+   "title": "IT Lideri",
+   "expertise": "Kurulum, çalışma ortamı, bağımlılıklar, derleme ve dağıtım hattı, loglama ve izleme.",
+   "prompt": "",
+   "tools": [],
+   "model": "opus",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-sistem-ortam",
+   "role": "uzman",
+   "department": "sistem",
+   "title": "Kurulum & Ortam Uzmanı",
+   "expertise": "Bağımlılık yönetimi, sürüm uyumu, çalışma ortamı kurulumu, paket yöneticileri",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-sistem-cicd",
+   "role": "uzman",
+   "department": "sistem",
+   "title": "CI/CD Uzmanı",
+   "expertise": "Derleme hattı, otomatik test koşumu, sürüm paketleme, dağıtım adımları",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-sistem-izleme",
+   "role": "uzman",
+   "department": "sistem",
+   "title": "İzleme Uzmanı",
+   "expertise": "Log toplama, hata takibi, performans ölçümü, uyarı eşikleri",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "lider-backend",
+   "role": "lider",
+   "department": "backend",
+   "title": "Backend Lideri",
+   "expertise": "Sunucu tarafı mantık, API tasarımı, veritabanı şeması ve sorguları, dış servis entegrasyonları.",
+   "prompt": "",
+   "tools": [],
+   "model": "opus",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-backend-api",
+   "role": "uzman",
+   "department": "backend",
+   "title": "API Uzmanı",
+   "expertise": "Uç nokta tasarımı, istek ve yanıt sözleşmeleri, girdi doğrulama, hata kodları",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-backend-veritabani",
+   "role": "uzman",
+   "department": "backend",
+   "title": "Veritabanı Uzmanı",
+   "expertise": "Şema tasarımı, sorgu optimizasyonu, göç betikleri, indeksleme, veri bütünlüğü",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-backend-entegrasyon",
+   "role": "uzman",
+   "department": "backend",
+   "title": "Entegrasyon Uzmanı",
+   "expertise": "Dış servis bağlantıları, kuyruk sistemleri, zamanlanmış işler, yeniden deneme mantığı",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "lider-frontend",
+   "role": "lider",
+   "department": "frontend",
+   "title": "Frontend Lideri",
+   "expertise": "Kullanıcı arayüzü geliştirme, bileşen yapısı, durum yönetimi, istemci performansı, erişilebilirlik.",
+   "prompt": "",
+   "tools": [],
+   "model": "opus",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-frontend-arayuz",
+   "role": "uzman",
+   "department": "frontend",
+   "title": "Arayüz Uzmanı",
+   "expertise": "Bileşen geliştirme, düzen, etkileşim, biçimlendirme",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-frontend-performans",
+   "role": "uzman",
+   "department": "frontend",
+   "title": "Durum & Performans Uzmanı",
+   "expertise": "Veri akışı, gereksiz render tespiti, paket boyutu, önbellekleme",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-frontend-erisilebilirlik",
+   "role": "uzman",
+   "department": "frontend",
+   "title": "Erişilebilirlik Uzmanı",
+   "expertise": "Klavye gezinimi, ekran okuyucu uyumu, renk kontrastı, odak yönetimi",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "lider-kalite",
+   "role": "lider",
+   "department": "kalite",
+   "title": "Test Lideri",
+   "expertise": "Test yazımı ve koşumu, kapsam analizi, uçtan uca senaryolar, regresyon ve yük testi.",
+   "prompt": "",
+   "tools": [],
+   "model": "opus",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-kalite-birim",
+   "role": "uzman",
+   "department": "kalite",
+   "title": "Birim Test Uzmanı",
+   "expertise": "Birim ve entegrasyon testleri, sınır durumlar, test kapsamı",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-kalite-uctan-uca",
+   "role": "uzman",
+   "department": "kalite",
+   "title": "Uçtan Uca Test Uzmanı",
+   "expertise": "Gerçek tarayıcıda arayüz testi, kullanıcı senaryoları, görsel doğrulama",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-kalite-regresyon",
+   "role": "uzman",
+   "department": "kalite",
+   "title": "Regresyon Uzmanı",
+   "expertise": "Kırılan davranış tespiti, yük ve dayanıklılık testi, geçmiş hataların tekrarı",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "lider-veri",
+   "role": "lider",
+   "department": "veri",
+   "title": "Veri Lideri",
+   "expertise": "Veri toplama ve temizleme, istatistiksel analiz, raporlama ve görselleştirme.",
+   "prompt": "",
+   "tools": [],
+   "model": "opus",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-veri-muhendis",
+   "role": "uzman",
+   "department": "veri",
+   "title": "Veri Mühendisi",
+   "expertise": "Veri toplama, temizleme, dönüştürme, veri kalitesi kontrolü",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-veri-analist",
+   "role": "uzman",
+   "department": "veri",
+   "title": "Analist",
+   "expertise": "İstatistiksel analiz, hipotez kurma, bulguların yorumlanması",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-veri-gorsellestirme",
+   "role": "uzman",
+   "department": "veri",
+   "title": "Görselleştirme Uzmanı",
+   "expertise": "Grafik seçimi, pano tasarımı, rapor üretimi",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "lider-seo",
+   "role": "lider",
+   "department": "seo",
+   "title": "SEO Lideri",
+   "expertise": "Teknik SEO denetimi, içerik ve anahtar kelime stratejisi, otorite ve rakip analizi.",
+   "prompt": "",
+   "tools": [],
+   "model": "opus",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-seo-teknik",
+   "role": "uzman",
+   "department": "seo",
+   "title": "Teknik SEO Uzmanı",
+   "expertise": "Taranabilirlik, indeksleme, site hızı, yapısal veri, site haritası",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-seo-icerik",
+   "role": "uzman",
+   "department": "seo",
+   "title": "İçerik Uzmanı",
+   "expertise": "Metin yazımı, anahtar kelime yerleştirme, başlık yapısı, okunabilirlik",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-seo-otorite",
+   "role": "uzman",
+   "department": "seo",
+   "title": "Otorite Uzmanı",
+   "expertise": "Backlink profili, rakip analizi, alan otoritesi, bağlantı fırsatları",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "lider-tasarim",
+   "role": "lider",
+   "department": "tasarim",
+   "title": "Tasarım Lideri",
+   "expertise": "Arayüz tasarımı, kullanıcı akışları, tasarım sistemi ve görsel tutarlılık.",
+   "prompt": "",
+   "tools": [],
+   "model": "opus",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-tasarim-arayuz-tasarim",
+   "role": "uzman",
+   "department": "tasarim",
+   "title": "Arayüz Tasarımcısı",
+   "expertise": "Ekran tasarımı, düzen, tipografi, renk, görsel hiyerarşi",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-tasarim-ux",
+   "role": "uzman",
+   "department": "tasarim",
+   "title": "UX Araştırmacısı",
+   "expertise": "Kullanıcı akışları, kullanılabilirlik değerlendirmesi, sürtünme noktaları",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-tasarim-tasarim-sistemi",
+   "role": "uzman",
+   "department": "tasarim",
+   "title": "Tasarım Sistemi Uzmanı",
+   "expertise": "Token yapısı, bileşen kütüphanesi, tutarlılık denetimi, tema desteği",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "lider-guvenlik",
+   "role": "lider",
+   "department": "guvenlik",
+   "title": "Güvenlik Lideri",
+   "expertise": "Kod ve bağımlılık güvenliği, yetkilendirme ve sır yönetimi, gizlilik ve mevzuat uyumu.",
+   "prompt": "",
+   "tools": [],
+   "model": "opus",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-guvenlik-kod",
+   "role": "uzman",
+   "department": "guvenlik",
+   "title": "Kod Güvenliği Uzmanı",
+   "expertise": "Enjeksiyon, girdi doğrulama, bağımlılık açıkları, güvenli varsayılanlar",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-guvenlik-altyapi",
+   "role": "uzman",
+   "department": "guvenlik",
+   "title": "Altyapı Güvenliği Uzmanı",
+   "expertise": "Yetkilendirme, sır yönetimi, ağ erişimi, en az yetki ilkesi",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  },
+  {
+   "key": "uzman-guvenlik-gizlilik",
+   "role": "uzman",
+   "department": "guvenlik",
+   "title": "Gizlilik & Uyum Uzmanı",
+   "expertise": "Kişisel veri işleme, saklama süreleri, KVKK ve GDPR uyumu, veri paylaşımı",
+   "prompt": "",
+   "tools": [],
+   "model": "sonnet",
+   "effort": "medium"
+  }
+ ]
+}

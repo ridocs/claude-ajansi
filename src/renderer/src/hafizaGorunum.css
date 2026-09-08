@@ -4,8 +4,12 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 480px;
+  /* Panelin kalan yuksekligini doldurur; sabit 480px sayfanin altinda
+     kocaman bir bosluk birakiyordu. */
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  padding-right: 4px;
 }
 
 .hafiza-blok {
@@ -13,6 +17,13 @@
   border: 1px solid var(--cizgi);
   border-radius: var(--r-kucuk);
   overflow: hidden;
+  /*
+   * Kritik: flex cocugu varsayilan olarak kap yuksekligine sigmak icin
+   * kuculur. .hafiza-blok'ta overflow:hidden oldugu icin kucultulen blok
+   * metni satirin ortasindan kesiyordu -- ekranda yarim harfler kaliyordu.
+   * Blok kendi boyunu korusun, kaydirmayi kap yapsin.
+   */
+  flex-shrink: 0;
 }
 
 .hafiza-blok-tarih {
