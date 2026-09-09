@@ -9,6 +9,7 @@ import {
   writeFileSync
 } from 'node:fs'
 import { join } from 'node:path'
+import { ozetCikar } from './ozet'
 
 /**
  * Ajan hafizasi.
@@ -122,17 +123,30 @@ export function hafizaTemizle(): void {
   }
 }
 
-/** Ajanin hafizasini sistem promptuna eklenecek bicimde dondurur. */
+/**
+ * Ajanin hafizasini sistem promptuna eklenecek bicimde dondurur.
+ *
+ * Tam defteri degil OZETINI gonderir. Sistem promptu ajanin her turunda
+ * yeniden gonderildigi icin tam defter (6000 karakter) uzun bir konusmada
+ * defalarca odenen bir yuke donusuyordu: 32 dolu defter icin turda ~48.000
+ * token. Ozet ayni bilgiyi ~8.700 token ile veriyor; ayrinti gerektiginde
+ * ajan defterini Read ile kendisi aciyor (yolu hafizaDosyaNotu'nda yazili).
+ */
 export function hafizaBolumu(ajanKey: string): string {
   const metin = hafizaOku(ajanKey)
   if (!metin.trim()) return ''
+
+  // Ozet cikmazsa (duz metin defter) kirpilmis ham metne dus.
+  const ozet = ozetCikar(metin) || metin.trim().slice(0, 1200)
+
   return [
     '',
-    '--- SENİN HAFIZAN ---',
-    'Daha önce bu alanda öğrendiklerin. Görevini yaparken bunları kullan;',
-    'geçerliliğini yitirmiş bir bilgi görürsen ona uyma ve raporunda belirt.',
+    '--- SENİN HAFIZAN (ÖZET) ---',
+    'Daha önce bu alanda öğrendiklerinin başlıkları. Görevini yaparken bunları',
+    'kullan; geçerliliğini yitirmiş bir bilgi görürsen ona uyma ve raporunda',
+    'belirt. Bir maddenin ayrıntısı gerekiyorsa defterini Read ile aç.',
     '',
-    metin.trim(),
+    ozet,
     '--- HAFIZA SONU ---',
     ''
   ].join('\n')
