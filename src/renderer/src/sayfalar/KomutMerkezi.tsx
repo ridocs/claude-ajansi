@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { FolderOpen, Send, Square, X } from 'lucide-react'
+import { Check, FolderOpen, PenLine, Send, Square, X } from 'lucide-react'
 import type { AgencyEvent, RunSummary } from '../../../shared/types'
-import { ajanAdi, kisaKlasor, type AjansDurumu } from '../ajansDurumu'
+import { ajanAdi, isaretiAyikla, kisaKlasor, type AjansDurumu } from '../ajansDurumu'
 import { gorunumAl } from '../departmanMeta'
 
 /** Oturumun uc hali: is bekleniyor, ajans calisiyor, mudur cevap bekliyor. */
@@ -18,6 +18,8 @@ interface Props {
   onMesaj: (metin: string) => Promise<void>
   onDurdur: () => void
   onKapat: () => void
+  /** Tasarim onayi: true onaylar, false revizyon ister. */
+  onTasarimOnayi: (onaylandi: boolean, not: string) => Promise<void>
 }
 
 const ORNEK = 'Bu klasördeki projeyi incele ve mimarisini anlatan bir README hazırla.'
@@ -47,10 +49,13 @@ export default function KomutMerkezi({
   onGonder,
   onMesaj,
   onDurdur,
-  onKapat
+  onKapat,
+  onTasarimOnayi
 }: Props): React.JSX.Element {
   const [metin, setMetin] = useState('')
   const [cevap, setCevap] = useState('')
+  const [revizyon, setRevizyon] = useState('')
+  const [revizyonAcik, setRevizyonAcik] = useState(false)
   const sonRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -68,6 +73,79 @@ export default function KomutMerkezi({
 
   return (
     <div className="komut">
+      {/* Tasarim onayi: mudur isareti yazip durdugunda acilir. */}
+      {ajans.tasarimOnayiBekliyor && (
+        <section className="kutu onay-karti">
+          <div className="kutu-baslik">
+            <h3>Tasarım onayını bekliyor</h3>
+            <span className="rozet uyari">
+              <span className="nokta canli" />
+              karar senin
+            </span>
+          </div>
+          <div className="kutu-govde onay-govde">
+            <p className="onay-sunum">{ajans.tasarimSunumu}</p>
+
+            {revizyonAcik ? (
+              <div className="onay-revizyon">
+                <textarea
+                  value={revizyon}
+                  onChange={(e) => setRevizyon(e.target.value)}
+                  placeholder="Neyin değişmesini istiyorsun? Tasarım ekibine iletilecek."
+                  rows={3}
+                  spellCheck={false}
+                />
+                <div className="onay-eylem">
+                  <button
+                    type="button"
+                    className="dugme"
+                    onClick={() => {
+                      setRevizyonAcik(false)
+                      setRevizyon('')
+                    }}
+                  >
+                    Vazgeç
+                  </button>
+                  <button
+                    type="button"
+                    className="dugme dugme-birincil"
+                    disabled={revizyon.trim().length < 3}
+                    onClick={() => {
+                      const not = revizyon
+                      setRevizyon('')
+                      setRevizyonAcik(false)
+                      void onTasarimOnayi(false, not)
+                    }}
+                  >
+                    <Send size={14} />
+                    Revizyon notunu gönder
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="onay-eylem">
+                <button
+                  type="button"
+                  className="dugme"
+                  onClick={() => setRevizyonAcik(true)}
+                >
+                  <PenLine size={14} />
+                  Revizyon iste
+                </button>
+                <button
+                  type="button"
+                  className="dugme dugme-birincil"
+                  onClick={() => void onTasarimOnayi(true, '')}
+                >
+                  <Check size={14} />
+                  Onayla, inşaya başla
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       <section className="kutu komut-sol">
         <div className="kutu-baslik">
           <h3>{hal === 'bekliyor' ? 'Müdür cevabını bekliyor' : 'Yeni Görev'}</h3>
@@ -214,7 +292,7 @@ export default function KomutMerkezi({
                         })}
                       </time>
                     </div>
-                    {o.text && <p>{o.text}</p>}
+                    {o.text && <p>{isaretiAyikla(o.text)}</p>}
                   </div>
                 </article>
               )

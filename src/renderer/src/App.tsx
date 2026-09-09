@@ -203,6 +203,34 @@ export default function App(): React.JSX.Element {
     }
   }, [klasor])
 
+  /** Tasarim turu: tasarim ekibi Figma'da tasarlar, onay sonrasi insa baslar. */
+  const tasarla = useCallback(
+    async (konu: string) => {
+      setOlaylar([])
+      setOzet(null)
+      setHal('calisiyor')
+      const cevap = await window.ajans.tasarla(konu, klasor)
+      if (!cevap.ok) {
+        setHal('bosta')
+        setOzet({
+          ok: false,
+          subtype: 'baslatilamadi',
+          costUsd: 0,
+          durationMs: 0,
+          result: cevap.detail
+        })
+      } else {
+        setSayfa('komut')
+      }
+    },
+    [klasor]
+  )
+
+  const tasarimOnayi = useCallback(async (onaylandi: boolean, not: string) => {
+    setHal('calisiyor')
+    await window.ajans.tasarimOnayi(onaylandi, not)
+  }, [])
+
   const durdur = useCallback(() => void window.ajans.durdur(), [])
   const oturumuKapat = useCallback(() => void window.ajans.oturumuKapat(), [])
 
@@ -238,6 +266,7 @@ export default function App(): React.JSX.Element {
             onMesaj={mesajGonder}
             onDurdur={durdur}
             onKapat={oturumuKapat}
+            onTasarimOnayi={tasarimOnayi}
           />
         )
       case 'gorevler':
@@ -265,6 +294,7 @@ export default function App(): React.JSX.Element {
               await briefGonder(brief)
             }}
             onDenetle={denetle}
+            onTasarla={tasarla}
           />
         )
       case 'raporlar':

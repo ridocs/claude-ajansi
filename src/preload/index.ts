@@ -41,6 +41,10 @@ const ajans = {
     ipcRenderer.invoke('ajans:egit', workspace),
   denetle: (workspace: string): Promise<{ ok: boolean; detail: string }> =>
     ipcRenderer.invoke('ajans:denetle', workspace),
+  tasarla: (konu: string, workspace: string): Promise<{ ok: boolean; detail: string }> =>
+    ipcRenderer.invoke('ajans:tasarla', konu, workspace),
+  tasarimOnayi: (onaylandi: boolean, not: string): Promise<{ ok: boolean; detail: string }> =>
+    ipcRenderer.invoke('ajans:tasarim-onayi', onaylandi, not),
 
   dosyaAc: (yol: string): Promise<{ ok: boolean; detail: string }> =>
     ipcRenderer.invoke('ajans:dosya-ac', yol),

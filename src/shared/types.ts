@@ -103,6 +103,14 @@ export interface AgencyEvent {
   meta?: Record<string, unknown>
 }
 
+/**
+ * Mudurun tasarim onayi istedigini bildiren isaret.
+ *
+ * Mudur sunumunun son satirina bunu yazar; arayuz olay akisinda arayip
+ * onay kartini acar. Hem main hem renderer okudugu icin burada duruyor.
+ */
+export const ONAY_ISARETI = '[TASARIM-ONAYI-BEKLENIYOR]'
+
 export interface RunSummary {
   ok: boolean
   subtype: string

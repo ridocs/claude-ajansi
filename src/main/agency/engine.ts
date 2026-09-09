@@ -7,6 +7,7 @@ import {
 import { randomUUID } from 'node:crypto'
 import { EGITIM_LIDER_TALIMATI, EGITIM_TALIMATI, egitimPrompt } from './egitim'
 import { DENETIM_TALIMATI, denetimPrompt } from './denetim'
+import { INSA_TALIMATI, TASARIM_TALIMATI, tasarimPrompt } from './tasarim'
 import { hafizaBolumu, hafizaDizini, hafizaDosyaYolu } from './hafiza'
 import { ekipBilgisi } from './hafizaPaylasim'
 import { ogrenmeyeDeger } from './ogrenme'
@@ -77,8 +78,17 @@ const EGITIM_ARACLARI = [
 ]
 const EGITIM_LIDER_ARACLARI = [...EGITIM_ARACLARI, 'Agent', 'SendMessage']
 
-/** Calismanin turu: normal is, egitim turu ya da proje denetimi. */
-export type CalismaKip = 'is' | 'egitim' | 'denetim'
+/**
+ * Figma'nin uzak MCP sunucusu.
+ *
+ * Kimlik dogrulama OAuth ile Claude Code tarafinda bir kez yapilir
+ * (claude mcp add --scope user --transport http figma <bu adres>); ajan
+ * sureci ayni kimlik deposunu kullanir.
+ */
+const FIGMA_MCP_URL = 'https://mcp.figma.com/mcp'
+
+/** Calismanin turu: normal is, egitim, denetim ya da tasarim. */
+export type CalismaKip = 'is' | 'egitim' | 'denetim' | 'tasarim'
 
 /** Kadroyu Agent SDK'nın beklediği biçime çevirir. */
 function ajanTanimlari(kip: CalismaKip): Record<string, AgentDefinition> {
@@ -89,11 +99,15 @@ function ajanTanimlari(kip: CalismaKip): Record<string, AgentDefinition> {
     const lider = a.role === 'lider'
     // Denetim kipinde ajan hem ekibini bilir hem denetim talimatini alir:
     // tespit turunda okur, onarim turunda yalnizca listedeki maddeyi kapatir.
+    // Tasarim kipinde yalnizca tasarim departmani Figma'ya girer; digerleri
+    // onaylanmis tasarimi koda cevirir.
+    const tasarimci = kip === 'tasarim' && a.department === 'tasarim'
     const ekEk =
       kip === 'egitim'
         ? EGITIM_TALIMATI + (lider ? EGITIM_LIDER_TALIMATI : '')
         : ekipBilgisi({ ajanKey: a.key, departmanlar: departments, kadro: agents }) +
-          (kip === 'denetim' ? DENETIM_TALIMATI : '')
+          (kip === 'denetim' ? DENETIM_TALIMATI : '') +
+          (kip === 'tasarim' ? (tasarimci ? TASARIM_TALIMATI : INSA_TALIMATI) : '')
     tanimlar[a.key] = {
       description: `${a.title}. ${a.expertise}`,
       // Ajanin kendi birikimi + ekibinin bildiklerinin ozeti.
@@ -104,6 +118,9 @@ function ajanTanimlari(kip: CalismaKip): Record<string, AgentDefinition> {
         hafizaBolumu(a.key) +
         ekEk,
       tools: egitim ? (lider ? EGITIM_LIDER_ARACLARI : EGITIM_ARACLARI) : a.tools,
+      // Figma yalnizca tasarim ekibine acilir: MCP araclari baglama yer
+      // kapliyor, gereksiz ajana verilmesi hem token hem karisiklik.
+      ...(tasarimci ? { mcpServers: ['figma'] } : {}),
       model: a.model,
       effort: a.effort,
       // Ates-et-unut kapali: cagiran ajan sonucu beklemek zorunda.
@@ -173,6 +190,11 @@ export interface CalismaSecenek {
    * sistemi test eder, sonra bulunan eksikler kapatilir.
    */
   denetim?: boolean
+  /**
+   * Tasarim turu: tasarim ekibi Figma'da tasarlar, kullanici onaylar,
+   * sonra insa baslar.
+   */
+  tasarim?: boolean
 }
 
 export interface CalismaKontrol {
@@ -207,7 +229,13 @@ export function briefCalistir(
     (parentToolUseId && ajanKimligi.get(parentToolUseId)) || 'mudur'
 
   const egitim = secenek.egitim === true
-  const kip: CalismaKip = egitim ? 'egitim' : secenek.denetim === true ? 'denetim' : 'is'
+  const kip: CalismaKip = egitim
+    ? 'egitim'
+    : secenek.denetim === true
+      ? 'denetim'
+      : secenek.tasarim === true
+        ? 'tasarim'
+        : 'is'
 
   const options: Options = {
     cwd: brief.workspace,
@@ -216,7 +244,9 @@ export function briefCalistir(
         ? egitimPrompt(departments)
         : kip === 'denetim'
           ? denetimPrompt(departments)
-          : mudurPrompt(departments),
+          : kip === 'tasarim'
+            ? tasarimPrompt(departments)
+            : mudurPrompt(departments),
     agents: ajanTanimlari(kip),
     // Müdürün kendi araçları: dağıtır, denetler, kendisi kod yazmaz.
     allowedTools: ['Agent', 'Read', 'Grep', 'Glob', 'TodoWrite', 'SendMessage'],
@@ -225,6 +255,12 @@ export function briefCalistir(
     permissionMode: 'default',
     // Ajanlar kendi hafiza dosyalarini okuyup guncelleyebilsin.
     additionalDirectories: [hafizaDizini()],
+    // Figma yalnizca tasarim turunda baglanir. Kimlik dogrulama Claude Code
+    // tarafinda bir kez yapilir (claude mcp add + OAuth); burada yalnizca
+    // sunucu adres olarak tanimlaniyor.
+    ...(kip === 'tasarim'
+      ? { mcpServers: { figma: { type: 'http' as const, url: FIGMA_MCP_URL } } }
+      : {}),
     abortController: iptal,
     env: {
       // Ajan sureci kurulu Claude oturumunu kendisi bulur; anahtar enjekte etmiyoruz.

@@ -1,4 +1,4 @@
-import type { AgencyEvent, AjanKaydi, DosyaIslem, Teslimat } from '../../shared/types'
+import { ONAY_ISARETI, type AgencyEvent, type AjanKaydi, type DosyaIslem, type Teslimat } from '../../shared/types'
 
 export interface Konusma {
   key: string
@@ -32,6 +32,25 @@ export interface AjansDurumu {
   sonAtamalar: Atama[]
   /** Ajan anahtari -> son olay zamani. Kim az once hareket etti? */
   sonHareket: Record<string, number>
+  /**
+   * Mudur tasarim onayi bekliyor mu?
+   *
+   * Tasarim turunda mudur sunumunun son satirina ONAY_ISARETI yazip durur.
+   * Kullanici cevap yazinca (onay ya da revizyon) bekleyis biter.
+   */
+  tasarimOnayiBekliyor: boolean
+  /** Onay beklenirken mudurun sundugu tasarim metni. */
+  tasarimSunumu: string
+}
+
+/**
+ * Mudurun onay isaretini gosterilecek metinden ayiklar.
+ *
+ * Isaret arayuzun onay kartini acmasi icin var; kullaniciya ham hâliyle
+ * gosterilmesi teknik bir sizinti olur.
+ */
+export function isaretiAyikla(metin: string): string {
+  return metin.split(ONAY_ISARETI).join('').trimEnd()
 }
 
 /** Yol ayiricisindan bagimsiz dosya adi. */
@@ -55,14 +74,25 @@ export function ajansDurumuHesapla(olaylar: AgencyEvent[]): AjansDurumu {
   const konusmalar: Konusma[] = []
   const atamalar: Atama[] = []
   const sonHareket: Record<string, number> = {}
+  let tasarimOnayiBekliyor = false
+  let tasarimSunumu = ''
 
   for (const o of olaylar) {
     // Sistem olaylari bir ajana ait degil; onlari hareket sayilmiyoruz.
     if (o.agentKey !== 'sistem') sonHareket[o.agentKey] = o.at
 
+    // Tasarim onayi: mudur isareti yazinca bekleyis baslar, kullanici
+    // cevap yazinca biter.
+    if (o.agentKey === 'mudur' && o.text.includes(ONAY_ISARETI)) {
+      tasarimOnayiBekliyor = true
+      tasarimSunumu = isaretiAyikla(o.text).trim()
+    } else if (o.kind === 'kullanici-mesaji') {
+      tasarimOnayiBekliyor = false
+    }
+
     // Mesaj panelinde gosterilecek konusmalar.
     if (o.kind === 'ajan-konustu' && o.text.trim()) {
-      konusmalar.unshift({ key: o.agentKey, metin: o.text.trim(), at: o.at })
+      konusmalar.unshift({ key: o.agentKey, metin: isaretiAyikla(o.text).trim(), at: o.at })
     } else if (o.kind === 'ajan-basladi' && o.text.trim()) {
       konusmalar.unshift({ key: o.agentKey, metin: o.text.trim(), at: o.at })
     }
@@ -174,7 +204,9 @@ export function ajansDurumuHesapla(olaylar: AgencyEvent[]): AjansDurumu {
     // Panel uzun akisi gosterir ama sinirsiz buyumesin.
     tumKonusmalar: konusmalar.slice(0, 200),
     sonAtamalar: atamalar.slice(0, 6),
-    sonHareket
+    sonHareket,
+    tasarimOnayiBekliyor,
+    tasarimSunumu
   }
 }
 

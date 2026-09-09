@@ -6,6 +6,7 @@ import { authDurumu, claudeOturumuVar } from './agency/auth'
 import { ayarlariOku, ayarlariYaz, klasorKullan, type Ayarlar } from './agency/ayarlar'
 import { EGITIM_BRIEFI } from './agency/egitim'
 import { denetimBriefi } from './agency/denetim'
+import { ONAY_VERILDI, revizyonMesaji, tasarimBriefi } from './agency/tasarim'
 import { briefCalistir, type CalismaKontrol } from './agency/engine'
 import { calismaKaydet, gecmisListele, gecmisOku, gecmisSil, kayitHazirla } from './agency/gecmis'
 import {
@@ -335,6 +336,54 @@ ipcMain.handle('ajans:denetle', async (_olay, workspace: string) => {
     })
 
   return { ok: true, detail: 'Denetim turu başladı.' }
+})
+
+/**
+ * Tasarim turu: tasarim ekibi Figma'da tasarlar, kullanici onaylar,
+ * sonra insa baslar. Tek oturumda iki asama.
+ */
+ipcMain.handle('ajans:tasarla', async (_olay, konu: string, workspace: string) => {
+  if (calisma) return { ok: false, detail: 'Ajans şu anda başka bir işin üzerinde çalışıyor.' }
+  if (!workspace) return { ok: false, detail: 'Önce çalışma klasörünü seç.' }
+  if (!konu.trim()) return { ok: false, detail: 'Neyin tasarlanacağını yaz.' }
+
+  const brief = tasarimBriefi(konu, workspace)
+  calismaOlaylari = []
+  calismaBilgi = { workspace, brief, egitim: false, basladi: Date.now() }
+  hafizaDosyalariHazirla(defterAnahtarlari())
+  calisma = briefCalistir({ text: brief, workspace }, olayGonder, onayIste, {
+    tasarim: true,
+    tamYetki: ayarlariOku().tamYetki
+  })
+
+  calisma.sonuc
+    .then((ozet) => {
+      gecmiseYaz(ozet)
+      pencere?.webContents.send('ajans:bitti', ozet)
+    })
+    .catch((hata: unknown) => {
+      pencere?.webContents.send('ajans:bitti', {
+        ok: false,
+        subtype: 'hata',
+        costUsd: 0,
+        durationMs: 0,
+        result: hata instanceof Error ? hata.message : String(hata)
+      })
+    })
+    .finally(() => {
+      calisma = null
+      for (const cozumle of bekleyenOnaylar.values()) cozumle(false)
+      bekleyenOnaylar.clear()
+    })
+
+  return { ok: true, detail: 'Tasarım turu başladı.' }
+})
+
+/** Tasarim onayi: mudure onay ya da revizyon notu gonderir. */
+ipcMain.handle('ajans:tasarim-onayi', (_olay, onaylandi: boolean, not: string) => {
+  if (!calisma) return { ok: false, detail: 'Çalışan bir iş yok.' }
+  calisma.mesajGonder(onaylandi ? ONAY_VERILDI : revizyonMesaji(not ?? ''))
+  return { ok: true, detail: onaylandi ? 'Onay iletildi.' : 'Revizyon notu iletildi.' }
 })
 
 ipcMain.handle('ajans:dosya-ac', async (_olay, yol: string) => {

@@ -2,6 +2,7 @@
 // Calistirmak icin: npm run test:durum
 
 import { ajanAdi, ajansDurumuHesapla, kisaKlasor } from '../src/renderer/src/ajansDurumu.ts'
+import { ONAY_ISARETI } from '../src/shared/types.ts'
 import type { AgencyEvent, AgencyEventKind } from '../src/shared/types.ts'
 
 let sayac = 0
@@ -218,6 +219,37 @@ function bekle(ad: string, ok: boolean, detay = ''): void {
     d.tumKonusmalar.map((k) => k.metin).join(' | ')
   )
   bekle('Konusmasiz akis bos doner', ajansDurumuHesapla([]).tumKonusmalar.length === 0)
+}
+
+// --- Tasarim onayi: mudur isareti yazinca bekleyis baslar
+{
+  const bekleyen = ajansDurumuHesapla([
+    o(
+      'ajan-konustu',
+      'mudur',
+      ['Tasarim hazir. Figma: figma.com/file/abc', ONAY_ISARETI].join('\n')
+    )
+  ])
+  bekle('Isaret gorulunce onay bekleniyor', bekleyen.tasarimOnayiBekliyor)
+  bekle(
+    'Sunum metninden isaret ayiklanir',
+    !bekleyen.tasarimSunumu.includes(ONAY_ISARETI),
+    bekleyen.tasarimSunumu
+  )
+  bekle(
+    'Sunum metni korunur',
+    bekleyen.tasarimSunumu.includes('figma.com/file/abc'),
+    bekleyen.tasarimSunumu
+  )
+
+  const cevaplanan = ajansDurumuHesapla([
+    o('ajan-konustu', 'mudur', ['Tasarim hazir.', ONAY_ISARETI].join('\n')),
+    o('kullanici-mesaji', 'sen', 'Onayliyorum.')
+  ])
+  bekle('Kullanici cevap verince bekleyis biter', !cevaplanan.tasarimOnayiBekliyor)
+
+  const isaretsiz = ajansDurumuHesapla([o('ajan-konustu', 'mudur', 'Plani cikardim.')])
+  bekle('Isaretsiz konusma onay istemez', !isaretsiz.tasarimOnayiBekliyor)
 }
 
 let gecti = 0

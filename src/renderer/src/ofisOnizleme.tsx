@@ -6,10 +6,12 @@ import { StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import OfisGorunumu from './bilesenler/OfisGorunumu'
 import Projeler from './sayfalar/Projeler'
+import KomutMerkezi from './sayfalar/KomutMerkezi'
 import HafizaSayfasi from './sayfalar/Hafiza'
 import { HAFIZA_FIKSTUR } from './hafizaFikstur'
 import kadroFikstur from './kadroFikstur.json'
 import { ajansDurumuHesapla } from './ajansDurumu'
+import { ONAY_ISARETI } from '../../shared/types'
 import type { AgencyEvent, AgentSpec, Department, DepartmentId } from '../../shared/types'
 import './styles.css'
 import './sayfalar.css'
@@ -20,6 +22,7 @@ import './ek.css'
 import './toplanti.css'
 import './beyin.css'
 import './hafizaGorunum.css'
+import './sayfalar.css'
 
 // Sabit fikstur: gorsel testin kadro degisikliklerinden etkilenmemesi icin
 // buradaki liste elle tutuluyor, main tarafina bagli degil.
@@ -202,6 +205,52 @@ function Sayfa(): React.JSX.Element {
       </main>
     )
   }
+  if (hangi === 'onay') {
+    // Mudur tasarimi sunup durdugu an: onay karti acik.
+    const olaylar = [
+      {
+        id: 'k1',
+        kind: 'ajan-konustu' as const,
+        agentKey: 'mudur',
+        at: Date.now(),
+        text: [
+          'Tasarım hazır. Figma dosyası: figma.com/design/AbC123/kahve-sitesi',
+          '',
+          'Tasarlanan ekranlar:',
+          '- Ana sayfa — hero, menü önizleme, konum ve çalışma saatleri',
+          '- Menü — kategoriye göre filtrelenebilen ürün listesi',
+          '- Hakkımızda — dükkânın hikâyesi ve ekip',
+          '- İletişim — form, harita, sosyal bağlantılar',
+          '',
+          'Tasarım kararları: Sıcak nötr bir zemin (kahve tonlarına yakın ama',
+          'doygunluğu düşük) seçildi ki ürün fotoğrafları öne çıksın. Başlıklar',
+          'için Fraunces, gövde için Inter — okunurluk ile karakter dengesi.',
+          '',
+          'Belirsiz kalan: online sipariş isteniyor mu? Tasarımda yer ayrıldı',
+          'ama akış çizilmedi.',
+          ONAY_ISARETI
+        ].join('\n')
+      }
+    ]
+    const ajans = ajansDurumuHesapla(olaylar)
+    return (
+      <main className="icerik">
+        <KomutMerkezi
+          klasor="C:/projeler/kahve-sitesi"
+          hal="bekliyor"
+          ozet={null}
+          olaylar={olaylar}
+          ajans={ajans}
+          onKlasorSec={() => {}}
+          onGonder={async () => {}}
+          onMesaj={async () => {}}
+          onDurdur={() => {}}
+          onKapat={() => {}}
+          onTasarimOnayi={async () => {}}
+        />
+      </main>
+    )
+  }
   if (hangi === 'projeler') {
     return (
       <div className="kabuk-govde" style={{ padding: 20 }}>
@@ -212,6 +261,7 @@ function Sayfa(): React.JSX.Element {
           onKlasorKullan={() => {}}
           onBaslat={async () => {}}
           onDenetle={async () => {}}
+          onTasarla={async () => {}}
         />
       </div>
     )

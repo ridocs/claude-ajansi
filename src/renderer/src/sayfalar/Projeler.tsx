@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Check, FolderOpen, FolderPlus, Rocket, ScanSearch } from 'lucide-react'
+import { Check, FolderOpen, FolderPlus, PenTool, Rocket, ScanSearch } from 'lucide-react'
 import { kisaKlasor } from '../ajansDurumu'
 import { PROJE_SABLONLARI, type ProjeSablonu } from '../projeSablonlari'
 
@@ -11,6 +11,8 @@ interface Props {
   onBaslat: (brief: string) => Promise<void>
   /** Mevcut klasoru mudure inceletir: once tespit, sonra eksik kapatma. */
   onDenetle: () => Promise<void>
+  /** Tasarim turu: once Figma'da tasarim, onay sonrasi insa. */
+  onTasarla: (konu: string) => Promise<void>
 }
 
 function projeAdi(yol: string): string {
@@ -24,11 +26,13 @@ export default function Projeler({
   onKlasorSec,
   onKlasorKullan,
   onBaslat,
-  onDenetle
+  onDenetle,
+  onTasarla
 }: Props): React.JSX.Element {
   const [gecmis, setGecmis] = useState<string[]>([])
   const [secili, setSecili] = useState<ProjeSablonu | null>(null)
   const [konu, setKonu] = useState('')
+  const [tasarimKonusu, setTasarimKonusu] = useState('')
 
   useEffect(() => {
     void window.ajans.ayarlar().then((a) => setGecmis(a.klasorGecmisi))
@@ -59,6 +63,44 @@ export default function Projeler({
         </button>
       </div>
 
+      {/* --- once tasarla, onayla, sonra insa et --- */}
+      <section className="kutu">
+        <div className="kutu-baslik">
+          <h3>Önce Tasarla, Sonra İnşa Et</h3>
+          {klasor && <span className="bag">{projeAdi(klasor)}</span>}
+        </div>
+        <div className="kutu-govde denetim-govde">
+          <p className="denetim-aciklama">
+            Tasarım ekibi siteyi önce Figma&apos;da tasarlar. Tasarım hazır olduğunda
+            müdür sana sunar ve <b>durur</b> — sen onaylamadan tek satır kod yazılmaz.
+            Onaylarsan inşa başlar, revizyon istersen notun tasarım ekibine gider.
+          </p>
+          <ol className="denetim-adimlar">
+            <li>UX/UI ekibi Figma&apos;da ekranları tasarlar</li>
+            <li>Müdür tasarımı sana sunar ve onay bekler</li>
+            <li>Onaylarsan frontend ekibi tasarımı koda çevirir</li>
+            <li>Müdür üretilen dosyaları tek tek doğrular</li>
+          </ol>
+          <input
+            className="giris"
+            value={tasarimKonusu}
+            onChange={(e) => setTasarimKonusu(e.target.value)}
+            placeholder="Ne tasarlansın? Örn: bir kahve dükkânı için tanıtım sitesi"
+            spellCheck={false}
+          />
+          <button
+            type="button"
+            className="dugme dugme-birincil"
+            onClick={() => void onTasarla(tasarimKonusu.trim())}
+            disabled={!klasor || calisiyor || tasarimKonusu.trim().length < 5}
+          >
+            <PenTool size={15} />
+            Tasarımı başlat
+          </button>
+          {!klasor && <span className="denetim-uyari">Önce bir klasör seç.</span>}
+        </div>
+      </section>
+
       {/* --- var olan projeyi denetle --- */}
       <section className="kutu">
         <div className="kutu-baslik">
@@ -81,7 +123,7 @@ export default function Projeler({
           </ol>
           <button
             type="button"
-            className="dugme birincil"
+            className="dugme dugme-birincil"
             onClick={() => void onDenetle()}
             disabled={!klasor || calisiyor}
           >
